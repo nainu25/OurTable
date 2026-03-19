@@ -1,15 +1,15 @@
 import { StyleSheet } from 'react-native';
-import { colors, typography, spacing, borderRadius } from '../../constants/styles';
+import { Theme } from '../../constants/styles';
 
-const styles = StyleSheet.create({
+export const createStyles = (theme: Theme) => StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
   },
   container: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: spacing.xxl,
+    padding: theme.spacing.xxl,
   },
   header: {
     alignItems: 'center',
@@ -17,42 +17,42 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 52,
-    marginBottom: spacing.md,
+    marginBottom: theme.spacing.md,
   },
   title: {
-    ...typography.h1,
-    color: colors.text,
-    marginBottom: spacing.sm,
+    ...theme.typography.h1,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
   },
   subtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
+    ...theme.typography.body,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   form: {
-    marginBottom: spacing.xxl,
+    marginBottom: theme.spacing.xxl,
   },
   label: {
-    ...typography.label,
+    ...theme.typography.label,
     fontWeight: '600',
-    color: colors.text,
-    marginBottom: spacing.xs,
-    marginTop: spacing.lg,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+    marginTop: theme.spacing.lg,
   },
   input: {
     borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.lg,
+    borderColor: theme.colors.inputBorder,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.lg,
     paddingVertical: 14,
-    ...typography.body,
-    color: colors.text,
-    backgroundColor: '#fafafa',
+    ...theme.typography.body,
+    color: theme.colors.text,
+    backgroundColor: theme.colors.inputBackground,
   },
   button: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.lg,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.lg,
     alignItems: 'center',
     marginTop: 28,
   },
@@ -60,8 +60,8 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   buttonText: {
-    color: colors.background,
-    ...typography.h3,
+    color: '#FFFFFF', // Action buttons stay white for high contrast
+    ...theme.typography.h3,
     fontWeight: '700',
   },
   footer: {
@@ -70,14 +70,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerText: {
-    color: colors.textSecondary,
-    ...typography.label,
+    color: theme.colors.textSecondary,
+    ...theme.typography.label,
   },
   link: {
-    color: colors.primary,
-    ...typography.label,
+    color: theme.colors.primary,
+    ...theme.typography.label,
     fontWeight: '600',
   },
 });
 
-export default styles;
+export default createStyles;

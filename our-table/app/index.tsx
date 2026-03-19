@@ -1,151 +1,250 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
+  RefreshControl,
+  Alert,
 } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets, SafeAreaProvider } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
 import PlaceCard from '../components/PlaceCard';
 import AddPlaceModal from '../components/AddPlaceModal';
-import { colors } from '../constants/styles';
-import styles from '../styles/screens/home.styles';
-import type { Place, Profile } from '../types';
+import PlaceDetailModal from '../components/PlaceDetailModal';
+import { useTheme } from '../context/ThemeContext';
+import { createStyles } from '../styles/screens/home.styles';
 
 const log = logger.scope('home');
 
+type FilterType = 'all' | 'unvisited' | 'visited' | 'manual' | 'maps' | 'instagram';
+
+const FILTERS: { key: FilterType; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'unvisited', label: 'Not Visited' },
+  { key: 'visited', label: 'Visited' },
+  { key: 'manual', label: 'Manual' },
+  { key: 'maps', label: 'Maps' },
+  { key: 'instagram', label: 'Instagram' },
+];
+
 function HomeContent() {
   const insets = useSafeAreaInsets();
-  const [profile, setProfile]       = useState<Profile | null>(null);
-  const [places, setPlaces]         = useState<Place[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
+  const { theme, isDark, toggleTheme } = useTheme();
+  const styles = createStyles(theme);
+
+  const [profile, setProfile] = useState<any>(null);
+  const [partner, setPartner] = useState<any>(null);
+  const [places, setPlaces] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Modal states
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<any>(null);
+
+  // Filter state
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   // ── Data fetching ────────────────────────────────────────────────────────────
 
-  const fetchProfile = async (): Promise<Profile | null> => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return null;
+  const loadData = useCallback(async (isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
+    else setRefreshing(true);
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .single();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
-    if (error) { log.error('Profile fetch failed', error); return null; }
-    log.info('Profile loaded', { coupleId: data.couple_id });
-    return data as Profile;
-  };
+      const { data: profiles, error: pError } = await supabase
+        .from('profiles')
+        .select('*');
 
-  const fetchPlaces = async (coupleId: string): Promise<Place[]> => {
-    const { data, error } = await supabase
-      .from('places')
-      .select('*')
-      .eq('couple_id', coupleId)
-      .order('created_at', { ascending: false });
+      if (pError) throw pError;
 
-    if (error) { log.error('Places fetch failed', error); return []; }
-    log.info('Places loaded', { count: data.length });
-    return data as Place[];
-  };
+      const myProfile = profiles.find(p => p.id === session.user.id);
+      setProfile(myProfile);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const p = await fetchProfile();
-    setProfile(p);
-    if (p?.couple_id) {
-      setPlaces(await fetchPlaces(p.couple_id));
+      if (myProfile?.couple_id) {
+        const partnerProfile = profiles.find(p => p.couple_id === myProfile.couple_id && p.id !== myProfile.id);
+        setPartner(partnerProfile);
+
+        const { data: placesData, error: plError } = await supabase
+          .from('places')
+          .select('*')
+          .eq('couple_id', myProfile.couple_id)
+          .order('created_at', { ascending: false });
+
+        if (plError) throw plError;
+        setPlaces(placesData);
+      }
+    } catch (err) {
+      log.error('Load data failed', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-    setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  // ── Handlers ─────────────────────────────────────────────────────────────────
+  // ── Filter logic ─────────────────────────────────────────────────────────────
 
-  const handleSignOut = async () => {
-    log.info('Signing out');
-    await supabase.auth.signOut();
-    // _layout.tsx handles the redirect automatically
-  };
+  const filteredPlaces = useMemo(() => {
+    switch (activeFilter) {
+      case 'unvisited': return places.filter(p => !p.visited);
+      case 'visited': return places.filter(p => p.visited);
+      case 'manual': return places.filter(p => p.source === 'manual');
+      case 'maps': return places.filter(p => p.source === 'maps');
+      case 'instagram': return places.filter(p => p.source === 'instagram');
+      default: return places;
+    }
+  }, [places, activeFilter]);
 
-  const handleSaved = () => {
-    setModalVisible(false);
-    load(); // refresh the list
-  };
+  // ── Render Helpers ─────────────────────────────────────────────────────────────
 
-  // ── Loading state ─────────────────────────────────────────────────────────────
+  const renderEmptyState = () => {
+    let title = "No places saved yet. Tap + to add your first one!";
+    if (activeFilter === 'unvisited') title = "No unvisited places!";
+    if (activeFilter === 'visited') title = "No visited places yet!";
+    if (activeFilter === 'manual') title = "No manual entries found.";
+    if (activeFilter === 'maps') title = "No map links found.";
+    if (activeFilter === 'instagram') title = "No instagram places found.";
 
-  if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={styles.emptyContainer}>
+        <Text style={{ fontSize: 40 }}>🍽️</Text>
+        <Text style={styles.emptyTitle}>{title}</Text>
+      </View>
+    );
+  };
+
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: () => supabase.auth.signOut() }
+    ]);
+  };
+
+  if (loading && !refreshing) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────────
-
   return (
     <View style={[styles.main, { paddingTop: insets.top }]}>
-      <StatusBar style="dark" />
-
-      {/* ── Header ── */}
+      {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>OurTable 🍽️</Text>
-          <Text style={styles.headerSubtitle}>Your shared wishlist</Text>
+        <Text style={styles.headerTitle}>OurTable</Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.iconButton} activeOpacity={0.7} onPress={toggleTheme}>
+            <Text style={{ fontSize: 18 }}>{isDark ? '☀️' : '🌙'}</Text>
+          </TouchableOpacity>
+          {/* <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
+              <Text style={{ fontSize: 18 }}>🗺️</Text>
+           </TouchableOpacity> */}
+          <TouchableOpacity style={styles.iconButton} activeOpacity={0.7} onPress={handleSignOut}>
+            <Text style={{ fontSize: 18 }}>🚪</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={handleSignOut} style={styles.signOutBtn}>
-          <Text style={styles.signOutText}>Sign out</Text>
-        </TouchableOpacity>
       </View>
 
-      {/* ── Places list ── */}
+      {/* Filter Bar */}
+      <View style={styles.filterContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterScroll}
+        >
+          {FILTERS.map((f) => {
+            const isActive = activeFilter === f.key;
+            return (
+              <TouchableOpacity
+                key={f.key}
+                onPress={() => setActiveFilter(f.key)}
+                style={[styles.filterChip, isActive && styles.filterChipActive]}
+              >
+                <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+                  {f.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Places List */}
       <FlatList
-        data={places}
+        data={filteredPlaces}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <PlaceCard place={item} />}
-        contentContainerStyle={[
-          styles.listContent,
-          places.length === 0 && styles.listEmpty,
-        ]}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyEmoji}>🗺️</Text>
-            <Text style={styles.emptyTitle}>No places saved yet</Text>
-            <Text style={styles.emptySubtitle}>
-              Tap the{' '}
-              <Text style={styles.highlightText}>+</Text>
-              {' '}button to add your first restaurant!
-            </Text>
-          </View>
+        renderItem={({ item }) => (
+          <PlaceCard
+            place={item}
+            partnerName={partner?.full_name}
+            currentUserId={profile?.id}
+            onPress={() => {
+              setSelectedPlace(item);
+              setDetailModalVisible(true);
+            }}
+          />
+        )}
+        contentContainerStyle={styles.listContent}
+        ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadData(true)}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
+          />
         }
+        ListEmptyComponent={renderEmptyState()}
       />
 
-      {/* ── Floating action button ── */}
+      {/* FAB */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => setModalVisible(true)}
-        activeOpacity={0.85}
+        onPress={() => setAddModalVisible(true)}
+        activeOpacity={0.8}
       >
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
 
-      {/* ── Add Place Modal ── */}
+      {/* Modals */}
       {profile?.couple_id && (
         <AddPlaceModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          onSaved={handleSaved}
+          visible={addModalVisible}
+          onClose={() => setAddModalVisible(false)}
+          onSaved={() => {
+            loadData(true);
+            setAddModalVisible(false);
+          }}
           coupleId={profile.couple_id}
           userId={profile.id}
+        />
+      )}
+
+      {selectedPlace && (
+        <PlaceDetailModal
+          visible={detailModalVisible}
+          place={selectedPlace}
+          partnerName={partner?.full_name}
+          currentUserId={profile?.id}
+          onClose={() => setDetailModalVisible(false)}
+          onUpdate={(updated) => {
+            if (updated) {
+              setPlaces(prev => prev.map(p => p.id === updated.id ? updated : p));
+              setSelectedPlace(updated);
+            }
+            loadData(true);
+          }}
         />
       )}
     </View>
@@ -159,5 +258,3 @@ export default function HomeScreen() {
     </SafeAreaProvider>
   );
 }
-
-

@@ -1,34 +1,42 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../lib/supabase';
 import { layoutLog } from '../lib/logger';
-import styles from '../styles/screens/layout.styles';
+import { createStyles } from '../styles/screens/layout.styles';
+import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import type { Session } from '@supabase/supabase-js';
 
-export default function RootLayout() {
+function AppContent() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const router = useRouter();
   const segments = useSegments();
+  const { theme, isDark } = useTheme();
+  const styles = createStyles(theme);
+
+  const isMounted = useRef(true);
 
   useEffect(() => {
-    // Get the initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted.current) return;
       layoutLog.info('Initial session', { userId: session?.user?.id ?? null });
       setSession(session);
     });
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted.current) return;
       layoutLog.info('Auth state changed', { event, userId: session?.user?.id ?? null });
       setSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted.current = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
-    // Wait until session state is resolved (not undefined)
     if (session === undefined) return;
 
     const seg = segments as string[];
@@ -67,7 +75,16 @@ export default function RootLayout() {
 
   return (
     <View style={styles.root}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }} />
     </View>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }

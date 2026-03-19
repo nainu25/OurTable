@@ -1,12 +1,11 @@
 import { StyleSheet } from 'react-native';
-import { colors } from '../../constants/styles';
+import { Theme } from '../../constants/styles';
 
-const styles = StyleSheet.create({
-  // Root layout styles if needed in future
+export const createStyles = (theme: Theme) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
   },
 });
 
-export default styles;
+export default createStyles;

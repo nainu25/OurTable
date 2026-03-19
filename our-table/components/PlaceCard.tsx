@@ -1,56 +1,80 @@
-import { View, Text } from 'react-native';
-import type { Place, PlaceSource } from '../types';
-import { colors } from '../constants/styles';
-import styles from '../styles/components/placeCard.styles';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
+import { createStyles } from '../styles/components/placeCard.styles';
 
-const SOURCE_CONFIG: Record<PlaceSource, { label: string; bg: string; color: string }> = {
-  manual:    { label: 'Manual',        bg: '#F5F5F5', color: colors.manual    },
-  maps:      { label: '📍 Maps',       bg: '#E8F5E9', color: colors.maps      },
-  instagram: { label: '📸 Instagram',  bg: '#FCE4EC', color: colors.instagram },
-};
+export default function PlaceCard({ place, onPress, partnerName, currentUserId }: Props) {
+  const { theme, isDark } = useTheme();
+  const styles = createStyles(theme);
 
-interface Props {
-  place: Place;
-}
+  const getSourceConfig = (source: string) => {
+    switch (source) {
+      case 'maps': 
+        return { label: 'Maps', bg: isDark ? '#1B2E1E' : '#E8F5E9', color: theme.colors.maps };
+      case 'instagram': 
+        return { label: 'Instagram', bg: isDark ? '#2D1F26' : '#FCE4EC', color: theme.colors.instagram };
+      default: 
+        return { label: 'Manual', bg: theme.colors.backgroundSecondary, color: theme.colors.textSecondary };
+    }
+  };
 
-export default function PlaceCard({ place }: Props) {
-  const badge = SOURCE_CONFIG[place.source] ?? SOURCE_CONFIG.manual;
+  const badge = getSourceConfig(place.source);
+  const isAddedByYou = place.added_by === currentUserId;
+  const addedByLabel = isAddedByYou ? 'You' : 'Your Partner';
 
   return (
-    <View style={styles.card}>
-      {/* Top row: source badge + visited pill */}
-      <View style={styles.topRow}>
-        <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-          <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={styles.card}
+    >
+      {/* Top row: Name + Source badge */}
+      <View style={styles.headerRow}>
+        <Text style={styles.placeName} numberOfLines={1}>
+          {place.name}
+        </Text>
+        <View style={[styles.sourceBadge, { backgroundColor: badge.bg }]}>
+          <Text style={[styles.sourceBadgeText, { color: badge.color }]}>
+            {badge.label}
+          </Text>
         </View>
+      </View>
 
-        <View style={styles.spacer} />
+      {/* Middle row: Address if exists */}
+      {place.address && (
+        <View style={styles.addressRow}>
+          <Text style={{ fontSize: 13 }}>📍</Text>
+          <Text style={styles.addressText} numberOfLines={1}>
+            {place.address}
+          </Text>
+        </View>
+      )}
+
+      {/* Bottom row: Notes + Visited label */}
+      <View style={styles.bottomRow}>
+        <Text style={styles.notesPreview} numberOfLines={1}>
+          {place.notes ? `"${place.notes}"` : ''}
+        </Text>
 
         {place.visited && (
-          <View style={styles.visitedBadge}>
-            <Text style={styles.visitedText}>✓ Visited</Text>
+          <View style={[styles.visitedPill, { backgroundColor: isDark ? '#1B2E1E' : '#E8F5E9' }]}>
+            <Text style={styles.visitedPillText}>✓ Visited</Text>
           </View>
         )}
       </View>
 
-      {/* Name */}
-      <Text style={styles.name}>{place.name}</Text>
-
-      {/* Address */}
-      {place.address ? (
-        <Text style={styles.address} numberOfLines={1}>
-          📌 {place.address}
+      {/* Footer: Added by */}
+      <View style={styles.footerRow}>
+        <Text style={styles.addedByText}>
+          Added by {addedByLabel}
         </Text>
-      ) : null}
-
-      {/* Notes preview */}
-      {place.notes ? (
-        <Text style={styles.notes} numberOfLines={1}>
-          {place.notes}
-        </Text>
-      ) : null}
-    </View>
+      </View>
+    </TouchableOpacity>
   );
 }
 
-
+interface Props {
+  place: any;
+  onPress: () => void;
+  partnerName: string | null;
+  currentUserId: string;
+}

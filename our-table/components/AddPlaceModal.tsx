@@ -10,17 +10,17 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
-import { colors, spacing } from '../constants/styles';
-import styles from '../styles/components/addPlaceModal.styles';
+import { useTheme } from '../context/ThemeContext';
+import { createStyles } from '../styles/components/addPlaceModal.styles';
 
 const log = logger.scope('add-place');
 
-type Tab = 'manual' | 'maps' | 'instagram';
+type Tab = 'manual' | 'search' | 'maps_link' | 'instagram';
 
 interface Props {
   visible: boolean;
@@ -31,12 +31,16 @@ interface Props {
 }
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'manual',    label: 'Manual'    },
-  { key: 'maps',      label: 'Search' }, // Renamed to Search but keeps 'maps' key
-  { key: 'instagram', label: 'Instagram' },
+  { key: 'manual',    label: 'Manual'   },
+  { key: 'search',    label: 'Search'   },
+  { key: 'maps_link', label: 'Map Link' },
+  { key: 'instagram', label: 'Instagram'},
 ];
 
 export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, userId }: Props) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   const [activeTab, setActiveTab] = useState<Tab>('manual');
   const [loading, setLoading]     = useState(false);
 
@@ -45,7 +49,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
   const [manualAddress, setManualAddress] = useState('');
   const [manualNotes,   setManualNotes]   = useState('');
 
-  // Maps / Search tab
+  // Search tab
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -57,7 +61,12 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
     lat: number;
     lon: number;
   } | null>(null);
-  const [mapsNotes, setMapsNotes] = useState('');
+  const [searchNotes, setSearchNotes] = useState('');
+
+  // Map Link tab
+  const [mapLinkUrl,   setMapLinkUrl]   = useState('');
+  const [mapLinkName,  setMapLinkName]  = useState('');
+  const [mapLinkNotes, setMapLinkNotes] = useState('');
 
   // Instagram tab
   const [igUrl,   setIgUrl]   = useState('');
@@ -66,7 +75,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
 
   // Fetch user location for search biasing (City/Country prioritization)
   useEffect(() => {
-    if (activeTab === 'maps' && (!userLocation || !userCountry)) {
+    if (activeTab === 'search' && (!userLocation || !userCountry)) {
       (async () => {
         try {
           const { status } = await Location.requestForegroundPermissionsAsync();
@@ -96,11 +105,11 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
         }
       })();
     }
-  }, [activeTab, userLocation, userCountry]);
+  }, [activeTab]);
 
   // Debounced search for Nominatim
   useEffect(() => {
-    if (activeTab !== 'maps' || !searchQuery.trim() || searchQuery.length < 3) {
+    if (activeTab !== 'search' || !searchQuery.trim() || searchQuery.length < 3) {
       setSearchResults([]);
       setIsSearching(false);
       return;
@@ -115,12 +124,10 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
           country: userCountry 
         });
 
-        // 1. Viewbox (~50km radius) for City preference
-        // 2. countrycodes for Country preference
-        let url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&addressdetails=1&limit=10`;
+        let url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&addressdetails=1&limit=15&accept-language=en`;
         
         if (userLocation) {
-          const delta = 0.5;
+          const delta = 0.2;
           const lon1 = userLocation.lon - delta;
           const lat1 = userLocation.lat + delta;
           const lon2 = userLocation.lon + delta;
@@ -149,8 +156,9 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
 
   const resetAll = () => {
     setManualName(''); setManualAddress(''); setManualNotes('');
-    setSearchQuery(''); setSearchResults([]); setSelectedPlace(null); setMapsNotes('');
-    setIgUrl('');      setIgName('');       setIgNotes('');
+    setSearchQuery(''); setSearchResults([]); setSelectedPlace(null); setSearchNotes('');
+    setMapLinkUrl(''); setMapLinkName(''); setMapLinkNotes('');
+    setIgUrl(''); setIgName(''); setIgNotes('');
     setActiveTab('manual');
     setLoading(false);
     setIsSearching(false);
@@ -161,7 +169,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
     onClose();
   };
 
-  const selectPlace = (item: any) => {
+  const selectPlaceFromSearch = (item: any) => {
     const rawName = item.name || item.display_name.split(',')[0];
     const place = {
       name: rawName,
@@ -193,7 +201,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
         notes:   manualNotes.trim()   || null,
       };
 
-    } else if (activeTab === 'maps') {
+    } else if (activeTab === 'search') {
       if (!selectedPlace) {
         Alert.alert('Selection required', 'Please search and select a place.');
         return;
@@ -205,7 +213,24 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
         address:   selectedPlace.address,
         latitude:  selectedPlace.lat,
         longitude: selectedPlace.lon,
-        notes:     mapsNotes.trim() || null,
+        notes:     searchNotes.trim() || null,
+      };
+
+    } else if (activeTab === 'maps_link') {
+      if (!mapLinkUrl.trim()) {
+        Alert.alert('URL required', 'Please paste a map link.');
+        return;
+      }
+      if (!mapLinkName.trim()) {
+        Alert.alert('Name required', 'Please enter a place name.');
+        return;
+      }
+      payload = {
+        ...payload,
+        source:   'maps',
+        name:     mapLinkName.trim(),
+        maps_url: mapLinkUrl.trim(),
+        notes:    mapLinkNotes.trim() || null,
       };
 
     } else if (activeTab === 'instagram') {
@@ -260,18 +285,20 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
 
           {/* Tab bar */}
           <View style={styles.tabBar}>
-            {TABS.map((tab) => (
-              <TouchableOpacity
-                key={tab.key}
-                style={styles.tab}
-                onPress={() => setActiveTab(tab.key)}
-              >
-                <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
-                  {tab.label}
-                </Text>
-                {activeTab === tab.key && <View style={styles.tabUnderline} />}
-              </TouchableOpacity>
-            ))}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {TABS.map((tab) => (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={[styles.tab, { minWidth: 100 }]}
+                  onPress={() => setActiveTab(tab.key)}
+                >
+                  <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
+                    {tab.label}
+                  </Text>
+                  {activeTab === tab.key && <View style={styles.tabUnderline} />}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
 
           {/* Tab content */}
@@ -287,7 +314,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. Nobu Restaurant"
-                  placeholderTextColor={colors.textHint}
+                  placeholderTextColor={theme.colors.placeholder}
                   value={manualName}
                   onChangeText={setManualName}
                 />
@@ -295,7 +322,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. 105 Hudson St, New York"
-                  placeholderTextColor={colors.textHint}
+                  placeholderTextColor={theme.colors.placeholder}
                   value={manualAddress}
                   onChangeText={setManualAddress}
                 />
@@ -303,7 +330,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
                 <TextInput
                   style={[styles.input, styles.multiline]}
                   placeholder="e.g. Saw it on TikTok, want to try the tasting menu"
-                  placeholderTextColor={colors.textHint}
+                  placeholderTextColor={theme.colors.placeholder}
                   multiline
                   numberOfLines={4}
                   value={manualNotes}
@@ -312,23 +339,23 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
               </>
             )}
 
-            {/* Search (Maps) */}
-            {activeTab === 'maps' && (
+            {/* Search */}
+            {activeTab === 'search' && (
               <>
                 <Text style={styles.label}>Search Place *</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <TextInput
                     style={[styles.input, { flex: 1, marginBottom: 0 }]}
                     placeholder="Search for a restaurant or bar..."
-                    placeholderTextColor={colors.textHint}
+                    placeholderTextColor={theme.colors.placeholder}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                   />
                   {isSearching && (
-                    <ActivityIndicator 
-                      size="small" 
-                      color={colors.primary} 
-                      style={{ position: 'absolute', right: 12 }} 
+                    <ActivityIndicator
+                      size="small"
+                      color={theme.colors.primary}
+                      style={{ position: 'absolute', right: 12 }}
                     />
                   )}
                 </View>
@@ -336,26 +363,31 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
                 {/* Results List */}
                 {searchResults.length > 0 && (
                   <View style={styles.resultsList}>
-                    {searchResults.map((item, idx) => (
-                      <TouchableOpacity
-                        key={idx}
-                        style={styles.resultItem}
-                        onPress={() => selectPlace(item)}
-                      >
-                        <Text style={styles.resultName} numberOfLines={1}>
-                          {item.name || item.display_name.split(',')[0]}
-                        </Text>
-                        <Text style={styles.resultAddress} numberOfLines={1}>
-                          {item.display_name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                    <ScrollView
+                      keyboardShouldPersistTaps="always"
+                      nestedScrollEnabled
+                      style={{ maxHeight: 210 }}
+                    >
+                      {searchResults.map((item, idx) => (
+                        <TouchableOpacity
+                          key={idx}
+                          style={styles.resultItem}
+                          onPress={() => selectPlaceFromSearch(item)}
+                        >
+                          <Text style={styles.resultName} numberOfLines={1}>
+                            {item.name || item.display_name.split(',')[0]}
+                          </Text>
+                          <Text style={styles.resultAddress} numberOfLines={1}>
+                            {item.display_name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
                   </View>
                 )}
 
-                {/* No results hint */}
                 {!isSearching && searchQuery.length >= 3 && searchResults.length === 0 && !selectedPlace && (
-                   <Text style={styles.emptyText}>No places found. Try a different search.</Text>
+                  <Text style={styles.emptyText}>No places found. Try a different search.</Text>
                 )}
 
                 {/* Selected Place Card */}
@@ -369,7 +401,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
                         {selectedPlace.address}
                       </Text>
                     </View>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.clearSelection}
                       onPress={() => setSelectedPlace(null)}
                     >
@@ -378,15 +410,49 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
                   </View>
                 )}
 
-                <Text style={[styles.label, { marginTop: spacing.lg }]}>Notes</Text>
+                <Text style={[styles.label, { marginTop: theme.spacing.lg }]}>Notes</Text>
                 <TextInput
                   style={[styles.input, styles.multiline]}
                   placeholder="Add secret tips or why you want to go..."
-                  placeholderTextColor={colors.textHint}
+                  placeholderTextColor={theme.colors.placeholder}
                   multiline
                   numberOfLines={4}
-                  value={mapsNotes}
-                  onChangeText={setMapsNotes}
+                  value={searchNotes}
+                  onChangeText={setSearchNotes}
+                />
+              </>
+            )}
+
+            {/* Map Link */}
+            {activeTab === 'maps_link' && (
+              <>
+                <Text style={styles.label}>Map URL *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Paste Google Maps link here"
+                  placeholderTextColor={theme.colors.placeholder}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  value={mapLinkUrl}
+                  onChangeText={setMapLinkUrl}
+                />
+                <Text style={styles.label}>Place Name *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. Central Park"
+                  placeholderTextColor={theme.colors.placeholder}
+                  value={mapLinkName}
+                  onChangeText={setMapLinkName}
+                />
+                <Text style={styles.label}>Notes</Text>
+                <TextInput
+                  style={[styles.input, styles.multiline]}
+                  placeholder="Any notes about this place..."
+                  placeholderTextColor={theme.colors.placeholder}
+                  multiline
+                  numberOfLines={4}
+                  value={mapLinkNotes}
+                  onChangeText={setMapLinkNotes}
                 />
               </>
             )}
@@ -398,7 +464,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
                 <TextInput
                   style={styles.input}
                   placeholder="https://www.instagram.com/p/..."
-                  placeholderTextColor={colors.textHint}
+                  placeholderTextColor={theme.colors.placeholder}
                   autoCapitalize="none"
                   autoCorrect={false}
                   value={igUrl}
@@ -408,7 +474,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. The NoMad Restaurant"
-                  placeholderTextColor={colors.textHint}
+                  placeholderTextColor={theme.colors.placeholder}
                   value={igName}
                   onChangeText={setIgName}
                 />
@@ -416,7 +482,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
                 <TextInput
                   style={[styles.input, styles.multiline]}
                   placeholder="Any notes about this place..."
-                  placeholderTextColor={colors.textHint}
+                  placeholderTextColor={theme.colors.placeholder}
                   multiline
                   numberOfLines={4}
                   value={igNotes}
@@ -434,7 +500,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
               disabled={loading}
             >
               {loading
-                ? <ActivityIndicator color={colors.background} />
+                ? <ActivityIndicator color="#FFFFFF" />
                 : <Text style={styles.saveButtonText}>Save Place</Text>
               }
             </TouchableOpacity>

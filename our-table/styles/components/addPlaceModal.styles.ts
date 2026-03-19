@@ -1,35 +1,36 @@
 import { StyleSheet } from 'react-native';
-import { colors, typography, spacing, borderRadius } from '../../constants/styles';
+import { Theme } from '../../constants/styles';
 
-const styles = StyleSheet.create({
+export const createStyles = (theme: Theme) => StyleSheet.create({
   flex:     { flex: 1 },
-  safeArea: { flex: 1, backgroundColor: colors.background },
+  safeArea: { flex: 1, backgroundColor: theme.colors.background },
 
   // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
   },
   headerTitle: {
-    ...typography.h3,
-    color: colors.text,
+    ...theme.typography.h3,
+    color: theme.colors.text,
   },
   closeBtn: {
     width: 32,
     height: 32,
-    borderRadius: borderRadius.full,
-    backgroundColor: '#f2f2f2',
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.backgroundSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeBtnText: {
-    ...typography.label,
-    color: colors.textSecondary,
+    ...theme.typography.label,
+    color: theme.colors.textSecondary,
     fontWeight: '600',
   },
 
@@ -37,7 +38,8 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
   },
   tab: {
     flex: 1,
@@ -46,12 +48,12 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   tabText: {
-    ...typography.label,
+    ...theme.typography.label,
     fontWeight: '500',
-    color: colors.textHint,
+    color: theme.colors.textHint,
   },
   tabTextActive: {
-    color: colors.primary,
+    color: theme.colors.primary,
     fontWeight: '700',
   },
   tabUnderline: {
@@ -60,34 +62,34 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 2.5,
-    backgroundColor: colors.primary,
+    backgroundColor: theme.colors.primary,
     borderRadius: 2,
   },
 
   // Scroll content
   scroll: { flex: 1 },
   scrollContent: {
-    padding: spacing.lg,
+    padding: theme.spacing.lg,
     paddingBottom: 16,
   },
 
   // Form
   label: {
-    ...typography.label,
+    ...theme.typography.label,
     fontWeight: '600',
-    color: colors.text,
+    color: theme.colors.text,
     marginBottom: 6,
-    marginTop: spacing.lg,
+    marginTop: theme.spacing.lg,
   },
   input: {
     borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.lg,
+    borderColor: theme.colors.inputBorder,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.lg,
     paddingVertical: 14,
-    ...typography.body,
-    color: colors.text,
-    backgroundColor: '#fafafa',
+    ...theme.typography.body,
+    color: theme.colors.text,
+    backgroundColor: theme.colors.inputBackground,
   },
   multiline: {
     height: 110,
@@ -97,69 +99,74 @@ const styles = StyleSheet.create({
 
   // Footer
   footer: {
-    padding: spacing.lg,
-    paddingBottom: spacing.md,
+    padding: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
   },
   saveButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.lg,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.lg,
     alignItems: 'center',
   },
   saveButtonDisabled: { opacity: 0.7 },
   saveButtonText: {
-    color: colors.background,
-    ...typography.h3,
+    color: '#FFFFFF',
+    ...theme.typography.h3,
     fontWeight: '700',
   },
   hint: {
-    ...typography.small,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
+    ...theme.typography.small,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.xs,
   },
   hintError: {
-    ...typography.small,
-    color: colors.primary,
-    marginTop: spacing.xs,
+    ...theme.typography.small,
+    color: theme.colors.primary,
+    marginTop: theme.spacing.xs,
     fontWeight: '500',
   },
 
   // Search Results
   resultsList: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.card,
     borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: spacing.xs,
-    maxHeight: 220,
-    zIndex: 10,
+    borderColor: theme.colors.border,
+    maxHeight: 210, // ~3.5 items with scrolling
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.md, // Add gap before next field
+    zIndex: 100,
+    elevation: 3,
+    overflow: 'hidden',
   },
   resultItem: {
-    padding: spacing.md,
+    padding: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.border,
   },
   resultName: {
-    ...typography.body,
+    ...theme.typography.body,
     fontWeight: '700',
-    color: colors.text,
+    color: theme.colors.text,
     marginBottom: 2,
   },
   resultAddress: {
-    ...typography.small,
-    color: colors.textSecondary,
+    ...theme.typography.small,
+    color: theme.colors.textSecondary,
   },
 
   // Selected Card
   selectedCard: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: borderRadius.md,
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1.5,
-    borderColor: colors.maps,
-    padding: spacing.md,
-    marginTop: spacing.md,
+    borderColor: theme.colors.maps,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -168,37 +175,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   selectedCardName: {
-    ...typography.body,
+    ...theme.typography.body,
     fontWeight: '700',
-    color: colors.text,
+    color: theme.colors.text,
   },
   selectedCardAddress: {
-    ...typography.small,
-    color: colors.textSecondary,
+    ...theme.typography.small,
+    color: theme.colors.textSecondary,
     marginTop: 2,
   },
   clearSelection: {
     width: 28,
     height: 28,
-    borderRadius: borderRadius.full,
-    backgroundColor: '#EEE',
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: spacing.sm,
+    marginLeft: theme.spacing.sm,
   },
   clearSelectionText: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
     fontWeight: 'bold',
   },
   emptyText: {
-    ...typography.small,
-    color: colors.textHint,
+    ...theme.typography.small,
+    color: theme.colors.textHint,
     textAlign: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: theme.spacing.md,
   },
 });
 
-
-
-export default styles;
+export default createStyles;

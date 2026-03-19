@@ -1,111 +1,119 @@
 import { StyleSheet } from 'react-native';
-import { colors, typography, spacing, borderRadius, shadows } from '../../constants/styles';
+import { Theme } from '../../constants/styles';
 
-const styles = StyleSheet.create({
+export const createStyles = (theme: Theme) => StyleSheet.create({
   main: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
   },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-  },
-
+  
   // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.background,
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.text,
+    ...theme.typography.h2,
+    color: theme.colors.text,
   },
-  headerSubtitle: {
-    ...typography.small,
-    color: colors.textHint,
-    marginTop: 2,
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  signOutBtn: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 7,
-    borderRadius: borderRadius.full,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.backgroundSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: theme.spacing.sm,
   },
-  signOutText: {
-    ...typography.small,
-    color: colors.textSecondary,
+
+  // Filter Bar
+  filterContainer: {
+    backgroundColor: theme.colors.background,
+    paddingVertical: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  filterScroll: {
+    paddingHorizontal: theme.spacing.lg,
+  },
+  filterChip: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.chipInactive,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginRight: theme.spacing.sm,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterChipActive: {
+    backgroundColor: theme.colors.chipActive,
+    borderColor: theme.colors.chipActive,
+  },
+  filterChipText: {
+    ...theme.typography.label,
+    color: theme.colors.chipTextInactive,
     fontWeight: '600',
+  },
+  filterChipTextActive: {
+    color: theme.colors.chipTextActive,
   },
 
   // List
   listContent: {
-    padding: spacing.lg,
-    paddingBottom: 100, // space for FAB
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: 100, // Space for FAB
   },
-  listEmpty: {
-    flex: 1,
-    justifyContent: 'center',
+  listSeparator: {
+    height: theme.spacing.md,
   },
-
-  // Empty state
   emptyContainer: {
+    flex: 1,
     alignItems: 'center',
-    padding: spacing.xxl,
-  },
-  emptyEmoji: {
-    fontSize: 56,
-    marginBottom: spacing.lg,
+    justifyContent: 'center',
+    paddingTop: 100,
+    paddingHorizontal: theme.spacing.xl,
   },
   emptyTitle: {
-    ...typography.h2,
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  emptySubtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
+    ...theme.typography.h3,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
-  },
-  highlightText: {
-    color: colors.primary,
-    fontWeight: '700',
+    marginTop: theme.spacing.md,
   },
 
-  // Floating action button
+  // Floating Action Button
   fab: {
     position: 'absolute',
-    bottom: spacing.xl,
-    right: spacing.xl,
+    bottom: 24,
+    right: 24,
     width: 56,
     height: 56,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.primary,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.card,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
+    ...theme.shadows.card,
     elevation: 8,
   },
   fabIcon: {
-    fontSize: 32,
-    color: colors.background,
-    lineHeight: 38,
-    fontWeight: '300',
+    fontSize: 24,
+    color: '#FFFFFF', // FAB icon is always white against primary
+    fontWeight: 'bold',
   },
 });
 
-export default styles;
+export default createStyles;

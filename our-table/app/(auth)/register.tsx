@@ -13,10 +13,13 @@ import {
 import { Link, useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { authLog } from '../../lib/logger';
-import { colors } from '../../constants/styles';
-import styles from '../../styles/screens/register.styles';
+import { useTheme } from '../../context/ThemeContext';
+import { createStyles } from '../../styles/screens/register.styles';
 
 export default function RegisterScreen() {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -81,7 +84,7 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             placeholder="Jane Doe"
-            placeholderTextColor={colors.textHint}
+            placeholderTextColor={theme.colors.placeholder}
             autoCapitalize="words"
             value={fullName}
             onChangeText={setFullName}
@@ -91,7 +94,7 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             placeholder="you@example.com"
-            placeholderTextColor={colors.textHint}
+            placeholderTextColor={theme.colors.placeholder}
             autoCapitalize="none"
             keyboardType="email-address"
             value={email}
@@ -102,7 +105,7 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             placeholder="At least 6 characters"
-            placeholderTextColor={colors.textHint}
+            placeholderTextColor={theme.colors.placeholder}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -114,7 +117,7 @@ export default function RegisterScreen() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={colors.background} />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.buttonText}>Create Account</Text>
             )}
@@ -133,5 +136,3 @@ export default function RegisterScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-

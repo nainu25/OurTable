@@ -1,61 +1,96 @@
 import { StyleSheet } from 'react-native';
-import { colors, typography, spacing, borderRadius, shadows } from '../../constants/styles';
+import { Theme } from '../../constants/styles';
 
-const styles = StyleSheet.create({
+export const createStyles = (theme: Theme) => StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.md,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    ...shadows.card,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    ...theme.shadows.card,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.colors.border,
   },
-  topRow: {
+  
+  // Top Row
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.sm,
   },
-  spacer: {
+  placeName: {
+    ...theme.typography.h3,
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text,
+    flex: 1,
+    marginRight: theme.spacing.sm,
+  },
+  sourceBadge: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 2,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.backgroundSecondary,
+  },
+  sourceBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  // Middle Row
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  addressText: {
+    ...theme.typography.small,
+    color: theme.colors.textSecondary,
+    marginLeft: 4,
     flex: 1,
   },
-  badge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: borderRadius.full,
+
+  // Bottom Row
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: theme.spacing.xs,
   },
-  badgeText: {
-    ...typography.label,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  visitedBadge: {
-    backgroundColor: '#E8F5E9',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: borderRadius.full,
-  },
-  visitedText: {
-    ...typography.label,
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.success,
-  },
-  name: {
-    ...typography.h3,
-    color: colors.text,
-    marginBottom: 4,
-  },
-  address: {
-    ...typography.small,
-    color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  notes: {
-    ...typography.small,
-    color: colors.textHint,
+  notesPreview: {
+    ...theme.typography.small,
+    color: theme.colors.textSecondary,
     fontStyle: 'italic',
+    flex: 1,
+    marginRight: theme.spacing.sm,
+  },
+  visitedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9', // Keeping successful green tint, maybe adjust for dark?
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 2,
+    borderRadius: theme.borderRadius.full,
+  },
+  visitedPillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: theme.colors.success,
+  },
+
+  // Footer Row
+  footerRow: {
+    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  addedByText: {
+    fontSize: 11,
+    color: theme.colors.textHint,
   },
 });
 
-export default styles;
+export default createStyles;

@@ -12,10 +12,13 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import { supabase } from '../../lib/supabase';
-import { colors } from '../../constants/styles';
-import styles from '../../styles/screens/login.styles';
+import { useTheme } from '../../context/ThemeContext';
+import { createStyles } from '../../styles/screens/login.styles';
 
 export default function LoginScreen() {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,7 +58,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="you@example.com"
-            placeholderTextColor={colors.textHint}
+            placeholderTextColor={theme.colors.placeholder}
             autoCapitalize="none"
             keyboardType="email-address"
             value={email}
@@ -66,7 +69,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="Your password"
-            placeholderTextColor={colors.textHint}
+            placeholderTextColor={theme.colors.placeholder}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -78,7 +81,7 @@ export default function LoginScreen() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={colors.background} />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.buttonText}>Sign In</Text>
             )}
@@ -97,5 +100,3 @@ export default function LoginScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-

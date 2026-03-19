@@ -13,8 +13,8 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { coupleLog } from '../../lib/logger';
-import { colors } from '../../constants/styles';
-import styles from '../../styles/screens/couple.styles';
+import { useTheme } from '../../context/ThemeContext';
+import { createStyles } from '../../styles/screens/couple.styles';
 
 /** Generates a random 6-character uppercase invite code */
 function generateInviteCode(): string {
@@ -25,6 +25,9 @@ function generateInviteCode(): string {
 }
 
 export default function CoupleScreen() {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   const [inviteCode, setInviteCode] = useState('');
   const [creating, setCreating] = useState(false);
   const [joining, setJoining] = useState(false);
@@ -137,7 +140,6 @@ export default function CoupleScreen() {
           Share this code with your partner so they can join:
         </Text>
 
-        {/* selectable={true} lets the user long-press and copy on Android */}
         <View style={styles.codeBox}>
           <Text selectable style={styles.codeText}>
             {createdCode}
@@ -185,7 +187,7 @@ export default function CoupleScreen() {
             disabled={creating || joining}
           >
             {creating ? (
-              <ActivityIndicator color={colors.background} />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.ctaButtonText}>Create Table</Text>
             )}
@@ -207,7 +209,7 @@ export default function CoupleScreen() {
           <TextInput
             style={styles.input}
             placeholder="e.g. ABC123"
-            placeholderTextColor={colors.textHint}
+            placeholderTextColor={theme.colors.placeholder}
             autoCapitalize="characters"
             maxLength={6}
             value={inviteCode}
@@ -219,7 +221,7 @@ export default function CoupleScreen() {
             disabled={creating || joining}
           >
             {joining ? (
-              <ActivityIndicator color={colors.primary} />
+              <ActivityIndicator color={theme.colors.primary} />
             ) : (
               <Text style={styles.buttonOutlineText}>Join Table</Text>
             )}
@@ -229,5 +231,3 @@ export default function CoupleScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-
