@@ -137,6 +137,35 @@ export const createStyles = (theme: Theme) => StyleSheet.create({
     textDecorationLine: 'underline',
   },
 
+  // Rating Section
+  ratingSection: {
+    width: '100%',
+    alignItems: 'center',
+    marginVertical: theme.spacing.xl,
+    padding: theme.spacing.lg,
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderRadius: theme.borderRadius.lg,
+  },
+  ratingLabel: {
+    ...theme.typography.small,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  ratingHint: {
+    ...theme.typography.small,
+    color: theme.colors.textHint,
+    marginTop: theme.spacing.xs,
+    fontSize: 11,
+  },
+  ratingPrompt: {
+    fontSize: 13,
+    color: theme.colors.primary,
+    fontWeight: '600',
+    marginTop: theme.spacing.sm,
+  },
+
   // Danger Zone
   dangerZone: {
     marginTop: theme.spacing.xxl,

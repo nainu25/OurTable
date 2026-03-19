@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { createStyles } from '../styles/components/placeCard.styles';
+import StarRating from './StarRating';
 
 export default function PlaceCard({ place, onPress, partnerName, currentUserId }: Props) {
   const { theme, isDark } = useTheme();
@@ -62,11 +63,23 @@ export default function PlaceCard({ place, onPress, partnerName, currentUserId }
         )}
       </View>
 
-      {/* Footer: Added by */}
+      {/* Footer: Added by & Rating */}
       <View style={styles.footerRow}>
-        <Text style={styles.addedByText}>
-          Added by {addedByLabel}
-        </Text>
+        <View style={styles.ratingRow}>
+          <Text style={styles.addedByText}>
+            Added by {addedByLabel}
+          </Text>
+
+          {place.visited && (
+            <View>
+              {place.user_rating > 0 ? (
+                <StarRating rating={place.user_rating} size={14} />
+              ) : (
+                <Text style={styles.ratingTapHint}>Tap to rate</Text>
+              )}
+            </View>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );

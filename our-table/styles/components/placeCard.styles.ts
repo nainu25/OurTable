@@ -91,6 +91,19 @@ export const createStyles = (theme: Theme) => StyleSheet.create({
     fontSize: 11,
     color: theme.colors.textHint,
   },
+
+  // Rating Display
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
+    justifyContent: 'space-between',
+  },
+  ratingTapHint: {
+    fontSize: 11,
+    color: theme.colors.textHint,
+    fontStyle: 'italic',
+  },
 });
 
 export default createStyles;
