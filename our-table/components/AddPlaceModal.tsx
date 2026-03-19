@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,10 @@ import {
   Platform,
   SafeAreaView,
 } from 'react-native';
+import * as Location from 'expo-location';
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
-import { colors } from '../constants/styles';
+import { colors, spacing } from '../constants/styles';
 import styles from '../styles/components/addPlaceModal.styles';
 
 const log = logger.scope('add-place');
@@ -29,26 +30,9 @@ interface Props {
   userId: string;
 }
 
-/** Try to extract a readable place name from a Google Maps URL */
-function parseMapsName(url: string): string {
-  try {
-    // https://www.google.com/maps/place/Place+Name/@...
-    const placeMatch = url.match(/maps\/place\/([^/@?]+)/);
-    if (placeMatch) {
-      return decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
-    }
-    // ?q=Place+Name
-    const qMatch = url.match(/[?&]q=([^&]+)/);
-    if (qMatch) {
-      return decodeURIComponent(qMatch[1].replace(/\+/g, ' '));
-    }
-  } catch {}
-  return '';
-}
-
 const TABS: { key: Tab; label: string }[] = [
   { key: 'manual',    label: 'Manual'    },
-  { key: 'maps',      label: 'Maps Link' },
+  { key: 'maps',      label: 'Search' }, // Renamed to Search but keeps 'maps' key
   { key: 'instagram', label: 'Instagram' },
 ];
 
@@ -61,9 +45,18 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
   const [manualAddress, setManualAddress] = useState('');
   const [manualNotes,   setManualNotes]   = useState('');
 
-  // Maps tab
-  const [mapsUrl,   setMapsUrl]   = useState('');
-  const [mapsName,  setMapsName]  = useState('');
+  // Maps / Search tab
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [userCountry, setUserCountry] = useState<string | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<{
+    name: string;
+    address: string;
+    lat: number;
+    lon: number;
+  } | null>(null);
   const [mapsNotes, setMapsNotes] = useState('');
 
   // Instagram tab
@@ -71,11 +64,96 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
   const [igName,  setIgName]  = useState('');
   const [igNotes, setIgNotes] = useState('');
 
+  // Fetch user location for search biasing (City/Country prioritization)
+  useEffect(() => {
+    if (activeTab === 'maps' && (!userLocation || !userCountry)) {
+      (async () => {
+        try {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') return;
+
+          const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          
+          setUserLocation({
+            lat: location.coords.latitude,
+            lon: location.coords.longitude,
+          });
+
+          const geocode = await Location.reverseGeocodeAsync({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+
+          if (geocode.length > 0 && geocode[0].isoCountryCode) {
+            setUserCountry(geocode[0].isoCountryCode.toLowerCase());
+          }
+          
+          log.info('User region detected for localized search');
+        } catch (err) {
+          log.error('Failed to get user region', err);
+        }
+      })();
+    }
+  }, [activeTab, userLocation, userCountry]);
+
+  // Debounced search for Nominatim
+  useEffect(() => {
+    if (activeTab !== 'maps' || !searchQuery.trim() || searchQuery.length < 3) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        log.info('Searching Nominatim', { 
+          query: searchQuery, 
+          biased: !!userLocation,
+          country: userCountry 
+        });
+
+        // 1. Viewbox (~50km radius) for City preference
+        // 2. countrycodes for Country preference
+        let url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&addressdetails=1&limit=10`;
+        
+        if (userLocation) {
+          const delta = 0.5;
+          const lon1 = userLocation.lon - delta;
+          const lat1 = userLocation.lat + delta;
+          const lon2 = userLocation.lon + delta;
+          const lat2 = userLocation.lat - delta;
+          url += `&viewbox=${lon1},${lat1},${lon2},${lat2}&bounded=0`;
+        }
+
+        if (userCountry) {
+          url += `&countrycodes=${userCountry}`;
+        }
+
+        const response = await fetch(url, {
+          headers: { 'User-Agent': 'OurTable/1.0' }
+        });
+        const data = await response.json();
+        setSearchResults(data);
+      } catch (err) {
+        log.error('Search failed', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, activeTab, userLocation, userCountry]);
+
   const resetAll = () => {
     setManualName(''); setManualAddress(''); setManualNotes('');
-    setMapsUrl('');    setMapsName('');     setMapsNotes('');
+    setSearchQuery(''); setSearchResults([]); setSelectedPlace(null); setMapsNotes('');
     setIgUrl('');      setIgName('');       setIgNotes('');
     setActiveTab('manual');
+    setLoading(false);
+    setIsSearching(false);
   };
 
   const handleClose = () => {
@@ -83,14 +161,20 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
     onClose();
   };
 
-  const handleMapsUrlChange = (text: string) => {
-    setMapsUrl(text);
-    const parsed = parseMapsName(text);
-    if (parsed) setMapsName(parsed);
+  const selectPlace = (item: any) => {
+    const rawName = item.name || item.display_name.split(',')[0];
+    const place = {
+      name: rawName,
+      address: item.display_name,
+      lat: parseFloat(item.lat),
+      lon: parseFloat(item.lon),
+    };
+    setSelectedPlace(place);
+    setSearchResults([]);
+    setSearchQuery('');
   };
 
   const handleSave = async () => {
-    // Build payload based on active tab
     let payload: Record<string, unknown> = {
       couple_id: coupleId,
       added_by:  userId,
@@ -110,16 +194,17 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
       };
 
     } else if (activeTab === 'maps') {
-      if (!mapsUrl.trim()) {
-        Alert.alert('URL required', 'Please paste a Google Maps URL.');
+      if (!selectedPlace) {
+        Alert.alert('Selection required', 'Please search and select a place.');
         return;
       }
-      const name = mapsName.trim() || parseMapsName(mapsUrl) || 'Unknown Place';
       payload = {
         ...payload,
         source:    'maps',
-        name,
-        maps_url:  mapsUrl.trim(),
+        name:      selectedPlace.name,
+        address:   selectedPlace.address,
+        latitude:  selectedPlace.lat,
+        longitude: selectedPlace.lon,
         notes:     mapsNotes.trim() || null,
       };
 
@@ -165,7 +250,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          {/* ── Header ── */}
+          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Add a Place</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
@@ -173,7 +258,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
             </TouchableOpacity>
           </View>
 
-          {/* ── Tab bar ── */}
+          {/* Tab bar */}
           <View style={styles.tabBar}>
             {TABS.map((tab) => (
               <TouchableOpacity
@@ -189,7 +274,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
             ))}
           </View>
 
-          {/* ── Tab content ── */}
+          {/* Tab content */}
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
@@ -227,31 +312,76 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
               </>
             )}
 
-            {/* Maps Link */}
+            {/* Search (Maps) */}
             {activeTab === 'maps' && (
               <>
-                <Text style={styles.label}>Google Maps URL *</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Paste a Google Maps link here"
-                  placeholderTextColor={colors.textHint}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  value={mapsUrl}
-                  onChangeText={handleMapsUrlChange}
-                />
-                <Text style={styles.label}>Place Name</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Auto-filled from URL, or enter manually"
-                  placeholderTextColor={colors.textHint}
-                  value={mapsName}
-                  onChangeText={setMapsName}
-                />
-                <Text style={styles.label}>Notes</Text>
+                <Text style={styles.label}>Search Place *</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TextInput
+                    style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                    placeholder="Search for a restaurant or bar..."
+                    placeholderTextColor={colors.textHint}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+                  {isSearching && (
+                    <ActivityIndicator 
+                      size="small" 
+                      color={colors.primary} 
+                      style={{ position: 'absolute', right: 12 }} 
+                    />
+                  )}
+                </View>
+
+                {/* Results List */}
+                {searchResults.length > 0 && (
+                  <View style={styles.resultsList}>
+                    {searchResults.map((item, idx) => (
+                      <TouchableOpacity
+                        key={idx}
+                        style={styles.resultItem}
+                        onPress={() => selectPlace(item)}
+                      >
+                        <Text style={styles.resultName} numberOfLines={1}>
+                          {item.name || item.display_name.split(',')[0]}
+                        </Text>
+                        <Text style={styles.resultAddress} numberOfLines={1}>
+                          {item.display_name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                {/* No results hint */}
+                {!isSearching && searchQuery.length >= 3 && searchResults.length === 0 && !selectedPlace && (
+                   <Text style={styles.emptyText}>No places found. Try a different search.</Text>
+                )}
+
+                {/* Selected Place Card */}
+                {selectedPlace && (
+                  <View style={styles.selectedCard}>
+                    <View style={styles.selectedCardInfo}>
+                      <Text style={styles.selectedCardName} numberOfLines={1}>
+                        {selectedPlace.name}
+                      </Text>
+                      <Text style={styles.selectedCardAddress} numberOfLines={1}>
+                        {selectedPlace.address}
+                      </Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.clearSelection}
+                      onPress={() => setSelectedPlace(null)}
+                    >
+                      <Text style={styles.clearSelectionText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                <Text style={[styles.label, { marginTop: spacing.lg }]}>Notes</Text>
                 <TextInput
                   style={[styles.input, styles.multiline]}
-                  placeholder="Any notes about this place..."
+                  placeholder="Add secret tips or why you want to go..."
                   placeholderTextColor={colors.textHint}
                   multiline
                   numberOfLines={4}
@@ -296,7 +426,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
             )}
           </ScrollView>
 
-          {/* ── Save button ── */}
+          {/* Save button */}
           <View style={styles.footer}>
             <TouchableOpacity
               style={[styles.saveButton, loading && styles.saveButtonDisabled]}
@@ -314,5 +444,3 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
     </Modal>
   );
 }
-
-
