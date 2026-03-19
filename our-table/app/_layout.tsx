@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { layoutLog } from '../lib/logger';
+import styles from '../styles/screens/layout.styles';
 import type { Session } from '@supabase/supabase-js';
 
 export default function RootLayout() {
@@ -64,6 +66,8 @@ export default function RootLayout() {
   }, [session, segments]);
 
   return (
-    <Stack screenOptions={{ headerShown: false }} />
+    <View style={styles.root}>
+      <Stack screenOptions={{ headerShown: false }} />
+    </View>
   );
 }

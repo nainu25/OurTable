@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -13,6 +12,8 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import { supabase } from '../../lib/supabase';
+import { colors } from '../../constants/styles';
+import styles from '../../styles/screens/login.styles';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -32,7 +33,6 @@ export default function LoginScreen() {
     if (error) {
       Alert.alert('Login failed', error.message);
     }
-    // On success, _layout.tsx handles the redirect automatically
   };
 
   return (
@@ -55,7 +55,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="you@example.com"
-            placeholderTextColor="#bbb"
+            placeholderTextColor={colors.textHint}
             autoCapitalize="none"
             keyboardType="email-address"
             value={email}
@@ -66,7 +66,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="Your password"
-            placeholderTextColor="#bbb"
+            placeholderTextColor={colors.textHint}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -78,7 +78,7 @@ export default function LoginScreen() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.background} />
             ) : (
               <Text style={styles.buttonText}>Sign In</Text>
             )}
@@ -98,82 +98,4 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 32,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  emoji: {
-    fontSize: 52,
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#888',
-    textAlign: 'center',
-  },
-  form: {
-    marginBottom: 32,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#444',
-    marginBottom: 6,
-    marginTop: 16,
-  },
-  input: {
-    borderWidth: 1.5,
-    borderColor: '#e0e0e0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: '#1a1a1a',
-    backgroundColor: '#fafafa',
-  },
-  button: {
-    backgroundColor: '#FF6B6B',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 28,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  footerText: {
-    color: '#888',
-    fontSize: 14,
-  },
-  link: {
-    color: '#FF6B6B',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+

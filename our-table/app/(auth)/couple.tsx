@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -14,6 +13,8 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { coupleLog } from '../../lib/logger';
+import { colors } from '../../constants/styles';
+import styles from '../../styles/screens/couple.styles';
 
 /** Generates a random 6-character uppercase invite code */
 function generateInviteCode(): string {
@@ -184,7 +185,7 @@ export default function CoupleScreen() {
             disabled={creating || joining}
           >
             {creating ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.background} />
             ) : (
               <Text style={styles.ctaButtonText}>Create Table</Text>
             )}
@@ -206,7 +207,7 @@ export default function CoupleScreen() {
           <TextInput
             style={styles.input}
             placeholder="e.g. ABC123"
-            placeholderTextColor="#bbb"
+            placeholderTextColor={colors.textHint}
             autoCapitalize="characters"
             maxLength={6}
             value={inviteCode}
@@ -218,7 +219,7 @@ export default function CoupleScreen() {
             disabled={creating || joining}
           >
             {joining ? (
-              <ActivityIndicator color="#FF6B6B" />
+              <ActivityIndicator color={colors.primary} />
             ) : (
               <Text style={styles.buttonOutlineText}>Join Table</Text>
             )}
@@ -229,171 +230,4 @@ export default function CoupleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 32,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 36,
-  },
-  emoji: {
-    fontSize: 52,
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#888',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  card: {
-    backgroundColor: '#fafafa',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1.5,
-    borderColor: '#f0f0f0',
-    marginBottom: 8,
-  },
-  cardTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: 6,
-  },
-  cardDescription: {
-    fontSize: 14,
-    color: '#888',
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  input: {
-    borderWidth: 1.5,
-    borderColor: '#e0e0e0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 18,
-    color: '#1a1a1a',
-    backgroundColor: '#fff',
-    marginBottom: 12,
-    letterSpacing: 4,
-    textAlign: 'center',
-    fontWeight: '700',
-  },
-  ctaButton: {
-    backgroundColor: '#FF6B6B',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  ctaButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  buttonOutline: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FF6B6B',
-  },
-  buttonOutlineText: {
-    color: '#FF6B6B',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#e0e0e0',
-  },
-  dividerText: {
-    marginHorizontal: 12,
-    color: '#aaa',
-    fontSize: 14,
-    fontWeight: '500',
-  },
 
-  // ── Success state styles ──────────────────────────────────
-  successContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-  },
-  successEmoji: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  successTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: 12,
-  },
-  successSubtitle: {
-    fontSize: 15,
-    color: '#888',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 28,
-  },
-  codeBox: {
-    backgroundColor: '#FFF4F4',
-    borderWidth: 2,
-    borderColor: '#FF6B6B',
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 40,
-    marginBottom: 12,
-  },
-  codeText: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: '#FF6B6B',
-    letterSpacing: 8,
-    textAlign: 'center',
-  },
-  codeHint: {
-    fontSize: 13,
-    color: '#bbb',
-    marginBottom: 40,
-  },
-  button: {
-    backgroundColor: '#FF6B6B',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-});
