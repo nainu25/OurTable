@@ -36,6 +36,26 @@ export const createStyles = (theme: Theme) => StyleSheet.create({
     justifyContent: 'center',
     marginLeft: theme.spacing.sm,
   },
+  badgeContainer: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: theme.colors.error,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.background,
+    paddingHorizontal: 2,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 8,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
 
   // Filter Bar
   filterContainer: {

@@ -17,6 +17,7 @@ import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
 import { useTheme } from '../context/ThemeContext';
 import { createStyles } from '../styles/components/addPlaceModal.styles';
+import { sendPushNotification } from '../lib/notifications';
 
 const log = logger.scope('add-place');
 
@@ -250,9 +251,56 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
     setLoading(true);
     try {
       log.info('Saving place', { source: activeTab, name: payload.name });
-      const { error } = await supabase.from('places').insert(payload);
+      const { data: savedPlace, error } = await supabase
+        .from('places')
+        .insert(payload)
+        .select()
+        .single();
+
       if (error) throw error;
       log.info('Place saved', { name: payload.name });
+
+      // Notify Partner
+      try {
+         const { data: partner } = await supabase
+            .from('profiles')
+            .select('id, expo_push_token, full_name')
+            .eq('couple_id', coupleId)
+            .neq('id', userId)
+            .single();
+
+         const { data: me } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', userId)
+            .single();
+
+         if (partner) {
+            const myName = me?.full_name || 'Your partner';
+            const placeName = payload.name as string;
+
+            // 1. Send Push
+            if (partner.expo_push_token) {
+               await sendPushNotification(
+                  partner.expo_push_token,
+                  "New place added! 🍽️",
+                  `${myName} saved ${placeName}`
+               );
+            }
+
+            // 2. Insert Notification Record
+            await supabase.from('notifications').insert({
+               couple_id: coupleId,
+               recipient_id: partner.id,
+               sender_id: userId,
+               place_id: savedPlace.id,
+               message: `${myName} saved ${placeName} to your list`
+            });
+         }
+      } catch (notifyErr) {
+         log.error('Partner notification failed', notifyErr);
+      }
+
       resetAll();
       onSaved();
     } catch (err: any) {

@@ -1,5 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import { View } from 'react-native';
+import { View, LogBox } from 'react-native';
+
+// Ignore the SDK 53+ Expo Go push notification warning as it is expected for this dev environment
+LogBox.ignoreLogs(['expo-notifications: Android Push notifications']);
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../lib/supabase';
@@ -7,6 +10,8 @@ import { layoutLog } from '../lib/logger';
 import { createStyles } from '../styles/screens/layout.styles';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import type { Session } from '@supabase/supabase-js';
+import * as Notifications from 'expo-notifications';
+import { registerForPushNotifications, savePushToken } from '../lib/notifications';
 
 function AppContent() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -72,6 +77,35 @@ function AppContent() {
         });
     }
   }, [session, segments]);
+
+  // Push Notifications Setup
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    // 1. Initial Registration
+    registerForPushNotifications().then(token => {
+      if (token && session.user.id) {
+        savePushToken(session.user.id, token);
+        layoutLog.info('Push token saved', { token });
+      }
+    });
+
+    // 2. Received (foreground)
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      layoutLog.info('Notification received', notification);
+    });
+
+    // 3. Responded (tapped)
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      layoutLog.info('Notification response received', response);
+      // Navigation can be handled here later
+    });
+
+    return () => {
+      notificationListener.remove();
+      responseListener.remove();
+    };
+  }, [session]);
 
   return (
     <View style={styles.root}>

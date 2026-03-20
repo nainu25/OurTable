@@ -17,6 +17,7 @@ import AddPlaceModal from '../components/AddPlaceModal';
 import PlaceDetailModal from '../components/PlaceDetailModal';
 import { useTheme } from '../context/ThemeContext';
 import { createStyles } from '../styles/screens/home.styles';
+import NotificationsModal from '../components/NotificationsModal';
 
 const log = logger.scope('home');
 
@@ -41,14 +42,68 @@ function HomeContent() {
   const [places, setPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Modal states
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<any>(null);
 
   // Filter state
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+
+  // ── Realtime & Refresh logic ───────────────────────────────────────────────────
+
+  const fetchUnreadCount = useCallback(async (userId: string) => {
+    const { count, error } = await supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_id', userId)
+      .eq('is_read', false);
+    
+    if (!error) setUnreadCount(count || 0);
+  }, []);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    fetchUnreadCount(profile.id);
+
+    // Subscribe to places and notifications
+    const placesChannel = supabase
+      .channel('places-realtime')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'places',
+        filter: `couple_id=eq.${profile.couple_id}`
+      }, (payload) => {
+        log.info('Realtime PLACE insert received', payload.new);
+        setPlaces(prev => {
+          if (prev.find(p => p.id === (payload.new as any).id)) return prev;
+          return [payload.new as any, ...prev];
+        });
+      })
+      .subscribe();
+
+    const notificationsChannel = supabase
+      .channel('notifications-realtime')
+      .on('postgres_changes', {
+        event: '*', // Listen for all to refresh count
+        schema: 'public',
+        table: 'notifications',
+        filter: `recipient_id=eq.${profile.id}`
+      }, () => {
+        log.info('Realtime NOTIFICATION change received');
+        fetchUnreadCount(profile.id);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(placesChannel);
+      supabase.removeChannel(notificationsChannel);
+    };
+  }, [profile?.id, profile?.couple_id, fetchUnreadCount]);
 
   // ── Data fetching ────────────────────────────────────────────────────────────
 
@@ -81,6 +136,9 @@ function HomeContent() {
 
         if (plError) throw plError;
         setPlaces(placesData);
+        
+        // Also refresh unread count
+        fetchUnreadCount(myProfile.id);
       }
     } catch (err) {
       log.error('Load data failed', err);
@@ -88,7 +146,7 @@ function HomeContent() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [fetchUnreadCount]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -144,12 +202,23 @@ function HomeContent() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>OurTable</Text>
         <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.iconButton} 
+            activeOpacity={0.7} 
+            onPress={() => setNotificationsModalVisible(true)}
+          >
+            <Text style={{ fontSize: 18 }}>🔔</Text>
+            {unreadCount > 0 && (
+              <View style={styles.badgeContainer}>
+                <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.iconButton} activeOpacity={0.7} onPress={toggleTheme}>
             <Text style={{ fontSize: 18 }}>{isDark ? '☀️' : '🌙'}</Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-              <Text style={{ fontSize: 18 }}>🗺️</Text>
-           </TouchableOpacity> */}
+
           <TouchableOpacity style={styles.iconButton} activeOpacity={0.7} onPress={handleSignOut}>
             <Text style={{ fontSize: 18 }}>🚪</Text>
           </TouchableOpacity>
@@ -223,11 +292,20 @@ function HomeContent() {
           visible={addModalVisible}
           onClose={() => setAddModalVisible(false)}
           onSaved={() => {
-            loadData(true);
+            // loadData(true) is mostly covered by realtime now, but still safe to call if needed
             setAddModalVisible(false);
           }}
           coupleId={profile.couple_id}
           userId={profile.id}
+        />
+      )}
+
+      {profile && (
+        <NotificationsModal
+          visible={notificationsModalVisible}
+          onClose={() => setNotificationsModalVisible(false)}
+          currentUserId={profile.id}
+          onNotificationUpdate={() => fetchUnreadCount(profile.id)}
         />
       )}
 
@@ -243,7 +321,6 @@ function HomeContent() {
               setPlaces(prev => prev.map(p => p.id === updated.id ? updated : p));
               setSelectedPlace(updated);
             }
-            loadData(true);
           }}
         />
       )}
