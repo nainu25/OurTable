@@ -306,7 +306,7 @@ export default function PlaceDetailModal({
                     {place.visited ? 'Visited' : 'Mark as Visited'}
                   </Text>
                   {place.visited && (
-                    <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
+                    <Ionicons name="checkmark-circle" size={18} color={theme.colors.card} style={{ marginLeft: 8 }} />
                   )}
                 </View>
               )}

@@ -69,7 +69,7 @@ export const createStyles = (theme: Theme) => StyleSheet.create({
   visitedPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9', // Keeping successful green tint, maybe adjust for dark?
+    backgroundColor: theme.colors.backgroundSecondary,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: 2,
     borderRadius: theme.borderRadius.full,

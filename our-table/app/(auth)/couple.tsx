@@ -177,7 +177,7 @@ export default function CoupleScreen() {
         >
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text style={styles.buttonText}>Continue</Text>
-            <Ionicons name="arrow-forward-outline" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
+            <Ionicons name="arrow-forward-outline" size={18} color={theme.colors.card} style={{ marginLeft: 8 }} />
           </View>
         </TouchableOpacity>
       </View>
@@ -213,7 +213,7 @@ export default function CoupleScreen() {
             disabled={creating || joining}
           >
             {creating ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={theme.colors.card} />
             ) : (
               <Text style={styles.ctaButtonText}>Create Table</Text>
             )}

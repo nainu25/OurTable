@@ -115,14 +115,14 @@ export default function RegisterScreen() {
           />
 
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: theme.colors.brandGold }, loading && styles.buttonDisabled]}
+            style={[styles.button, { backgroundColor: theme.colors.primary }, loading && styles.buttonDisabled]}
             onPress={handleRegister}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#1A1A1A" />
+              <ActivityIndicator color={theme.colors.card} />
             ) : (
-              <Text style={[styles.buttonText, { color: '#1A1A1A', fontWeight: 'bold' }]}>Create Account</Text>
+              <Text style={[styles.buttonText, { color: theme.colors.card, fontWeight: 'bold' }]}>Create Account</Text>
             )}
           </TouchableOpacity>
         </View>

@@ -551,7 +551,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
               disabled={loading}
             >
               {loading
-                ? <ActivityIndicator color="#FFFFFF" />
+                ? <ActivityIndicator color={theme.colors.card} />
                 : <Text style={styles.saveButtonText}>Save Place</Text>
               }
             </TouchableOpacity>

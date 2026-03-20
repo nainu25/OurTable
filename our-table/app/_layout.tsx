@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { View, LogBox } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Ignore the SDK 53+ Expo Go push notification warning as it is expected for this dev environment
 LogBox.ignoreLogs(['expo-notifications: Android Push notifications']);
@@ -20,6 +21,7 @@ SplashScreen.preventAutoHideAsync();
 
 function AppContent() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean | undefined>(undefined);
   const router = useRouter();
   const segments = useSegments();
   const { theme, isDark, isLoaded } = useTheme();
@@ -34,6 +36,13 @@ function AppContent() {
       setSession(session);
     });
 
+    AsyncStorage.getItem('ourtable_onboarding_complete').then((val) => {
+      if (isMounted.current) setHasSeenOnboarding(val === 'true');
+      console.log('onboarding complete:', hasSeenOnboarding)
+    });
+
+    console.log('session:', session)
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted.current) return;
       layoutLog.info('Auth state changed', { event, userId: session?.user?.id ?? null });
@@ -47,21 +56,37 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    if (session !== undefined && isLoaded) {
+    if (session !== undefined && isLoaded && hasSeenOnboarding !== undefined) {
       SplashScreen.hideAsync();
     }
-  }, [session, isLoaded]);
+  }, [session, isLoaded, hasSeenOnboarding]);
 
   useEffect(() => {
-    if (session === undefined) return;
+    if (session === undefined || hasSeenOnboarding === undefined) return;
 
     const seg = segments as string[];
     const inAuthGroup = seg[0] === '(auth)';
+    const inOnboarding = seg[0] === '(onboarding)';
     const onCoupleScreen = seg[1] === 'couple';
+    const onLoginOrRegister = seg[1] === 'login' || seg[1] === 'register';
 
-    if (!session && !inAuthGroup) {
-      layoutLog.info('No session — redirecting to login');
-      router.replace('/(auth)/login');
+    // Mark onboarding complete once they reach login/register
+    if (inAuthGroup && onLoginOrRegister && !hasSeenOnboarding) {
+      AsyncStorage.setItem('ourtable_onboarding_complete', 'true');
+      setHasSeenOnboarding(true);
+    }
+
+    if (!session) {
+      if (!hasSeenOnboarding && !inOnboarding) {
+        layoutLog.info('First launch — showing onboarding');
+        router.replace('/(onboarding)');
+        return;
+      }
+      if (hasSeenOnboarding && !inAuthGroup) {
+        layoutLog.info('No session — redirecting to login');
+        router.replace('/(auth)/login');
+        return;
+      }
       return;
     }
 
@@ -87,7 +112,7 @@ function AppContent() {
           }
         });
     }
-  }, [session, segments]);
+  }, [session, segments, hasSeenOnboarding]);
 
   // Push Notifications Setup
   useEffect(() => {
@@ -123,6 +148,7 @@ function AppContent() {
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: theme.colors.background } }}>
         <Stack.Screen name="index" options={{ animation: 'fade' }} />
+        <Stack.Screen name="(onboarding)/index" options={{ animation: 'fade', contentStyle: { backgroundColor: '#0D0D0D' } }} />
         <Stack.Screen name="(auth)/login" options={{ animation: 'fade' }} />
         <Stack.Screen name="(auth)/register" options={{ animation: 'fade' }} />
         <Stack.Screen name="(auth)/couple" options={{ animation: 'fade' }} />

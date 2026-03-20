@@ -53,7 +53,17 @@ export default function LoginScreen() {
       >
         <View style={styles.header}>
           <Ionicons name="restaurant-outline" size={64} color={theme.colors.brandGold} />
-          <Text style={[styles.title, { color: theme.colors.brandGold }]}>OurTable</Text>
+          <Text style={[
+            styles.title,
+            {
+              color: theme.colors.brandGold,
+              fontFamily: Platform.OS === 'ios' ? 'Snell Roundhand' : 'cursive',
+              fontStyle: 'italic',
+              fontWeight: 'bold',
+              fontSize: 42,
+              paddingHorizontal: 8,
+            }
+          ]}>OurTable</Text>
           <Text style={styles.subtitle}>Sign in to your shared wishlist</Text>
         </View>
 
@@ -80,14 +90,14 @@ export default function LoginScreen() {
           />
 
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: theme.colors.brandGold }, loading && styles.buttonDisabled]}
+            style={[styles.button, { backgroundColor: theme.colors.primary }, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#1A1A1A" />
+              <ActivityIndicator color={theme.colors.card} />
             ) : (
-              <Text style={[styles.buttonText, { color: '#1A1A1A', fontWeight: 'bold' }]}>Sign In</Text>
+              <Text style={[styles.buttonText, { color: theme.colors.card, fontWeight: 'bold' }]}>Sign In</Text>
             )}
           </TouchableOpacity>
         </View>

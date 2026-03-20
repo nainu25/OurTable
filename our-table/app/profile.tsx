@@ -224,8 +224,11 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Avatar */}
         <View style={styles.avatarContainer}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarInitials}>{getInitials(profile?.full_name)}</Text>
+          <View style={[
+            styles.avatarCircle,
+            { backgroundColor: isDark ? '#C9A84C' : '#1A0F0A' }
+          ]}>
+            <Text style={[styles.avatarInitials, { color: isDark ? '#1A0F0A' : '#C9A84C' }]}>{getInitials(profile?.full_name)}</Text>
           </View>
           <Text style={styles.userName}>{profile?.full_name || 'Loading...'}</Text>
           <Text style={styles.userEmail}>{email}</Text>

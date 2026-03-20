@@ -19,11 +19,11 @@ export default function PlaceCard({ place, onPress, partnerName, currentUserId, 
 
   const getSourceConfig = (source: string) => {
     switch (source) {
-      case 'maps': 
-        return { label: 'Maps', bg: isDark ? '#1B2E1E' : '#E8F5E9', color: theme.colors.maps, icon: 'map-outline' as const };
-      case 'instagram': 
-        return { label: 'Instagram', bg: isDark ? '#2D1F26' : '#FCE4EC', color: theme.colors.instagram, icon: 'camera-outline' as const };
-      default: 
+      case 'maps':
+        return { label: 'Maps', bg: theme.colors.backgroundSecondary, color: theme.colors.maps, icon: 'map-outline' as const };
+      case 'instagram':
+        return { label: 'Instagram', bg: theme.colors.backgroundSecondary, color: theme.colors.instagram, icon: 'camera-outline' as const };
+      default:
         return { label: 'Manual', bg: theme.colors.backgroundSecondary, color: theme.colors.textSecondary, icon: 'create-outline' as const };
     }
   };
@@ -78,7 +78,7 @@ export default function PlaceCard({ place, onPress, partnerName, currentUserId, 
           </Text>
 
           {place.visited && (
-            <View style={[styles.visitedPill, { backgroundColor: isDark ? '#1B2E1E' : '#E8F5E9', flexDirection: 'row', alignItems: 'center' }]}>
+            <View style={[styles.visitedPill, { flexDirection: 'row', alignItems: 'center' }]}>
               <Ionicons name="checkmark-circle" size={12} color={theme.colors.success} style={{ marginRight: 4 }} />
               <Text style={styles.visitedPillText}>Visited</Text>
             </View>

@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/branding/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1A1A1A"
+      "backgroundColor": "#1A0F0A"
     },
     "ios": {
       "bundleIdentifier": "com.ourtable.app",
