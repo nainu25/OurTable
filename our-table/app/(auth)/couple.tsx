@@ -18,6 +18,13 @@ import { createStyles } from '../../styles/screens/couple.styles';
 
 import { toast } from '../../lib/toast';
 
+let Clipboard: any;
+try {
+  Clipboard = require('expo-clipboard');
+} catch (e) {
+  console.warn('Clipboard native module missing. Rebuild your dev client.');
+}
+
 /** Generates a random 6-character uppercase invite code */
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -144,13 +151,25 @@ export default function CoupleScreen() {
           Share this code with your partner so they can join:
         </Text>
 
-        <View style={styles.codeBox}>
-          <Text selectable style={styles.codeText}>
+        <TouchableOpacity 
+          style={[styles.codeBox, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}
+          activeOpacity={0.7}
+          onPress={async () => {
+            if (Clipboard?.setStringAsync && createdCode) {
+              await Clipboard.setStringAsync(createdCode);
+              toast.success('Invite code copied!');
+            } else {
+              toast.error('Native Clipboard module requires app rebuild');
+            }
+          }}
+        >
+          <Text style={styles.codeText}>
             {createdCode}
           </Text>
-        </View>
+          <Ionicons name="copy-outline" size={28} color={theme.colors.primary} style={{ marginLeft: 16 }} />
+        </TouchableOpacity>
 
-        <Text style={styles.codeHint}>Long-press the code above to copy it</Text>
+        <Text style={styles.codeHint}>Tap the code above to copy it</Text>
 
         <TouchableOpacity
           style={styles.button}

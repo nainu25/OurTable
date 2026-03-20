@@ -259,22 +259,6 @@ function HomeContent() {
     );
   };
 
-  const handleSignOut = () => {
-    setMenuOpen(false);
-    setAlertConfig({
-      visible: true,
-      title: 'Sign Out',
-      message: 'Are you sure you want to sign out?',
-      isDestructive: true,
-      confirmText: 'Sign Out',
-      iconName: 'log-out-outline',
-      onConfirm: () => {
-        setAlertConfig(prev => ({ ...prev, visible: false }));
-        supabase.auth.signOut();
-        toast.info('Signed out');
-      }
-    });
-  };
 
   if (loading && !refreshing) {
     return (
@@ -298,86 +282,45 @@ function HomeContent() {
         </View>
 
         <View style={{ flex: 1, alignItems: 'center' }}>
-          <Text style={[styles.headerTitle, { fontFamily: Platform.OS === 'ios' ? 'Snell Roundhand' : 'cursive', fontStyle: 'italic', fontWeight: 'bold', fontSize: 32 }]}>
+          <Text style={[styles.headerTitle, { fontFamily: Platform.OS === 'ios' ? 'Snell Roundhand' : 'cursive', fontStyle: 'italic', fontWeight: 'bold', fontSize: 32, paddingHorizontal: 8, transform: [{ translateX: -5 }] }]}>
             OurTable
           </Text>
         </View>
 
-        <View style={{ flex: 1, alignItems: 'flex-end', zIndex: 10 }}>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', zIndex: 10 }}>
+          {/* Developer Logs (Hidden to normal users, visible to admins) */}
+          {(userEmail === 'chohanhasnain24@gmail.com' || userEmail === 'testsubject1@mailinator.com') && (
+            <TouchableOpacity
+              style={[styles.iconButton, { marginRight: 8 }]}
+              activeOpacity={0.7}
+              onPress={() => router.push('/logs')}
+            >
+              <Ionicons name="terminal-outline" size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+          )}
+          
           <TouchableOpacity
-            style={styles.iconButton}
+            style={[styles.iconButton, { marginRight: 8 }]}
             activeOpacity={0.7}
-            onPress={() => setMenuOpen(!menuOpen)}
+            onPress={() => setNotificationsModalVisible(true)}
           >
-            <Ionicons name="menu" size={24} color={theme.colors.text} />
+            <Ionicons name="notifications-outline" size={24} color={theme.colors.text} />
             {unreadCount > 0 && (
               <View style={styles.badgeContainer}>
                 <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
               </View>
             )}
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconButton}
+            activeOpacity={0.7}
+            onPress={() => router.push('/profile')}
+          >
+            <Ionicons name="person-circle-outline" size={28} color={theme.colors.text} />
+          </TouchableOpacity>
         </View>
       </View>
-
-      {/* Expandable Menu */}
-      {menuOpen && (
-        <View style={{
-          position: 'absolute',
-          top: insets.top + (Platform.OS === 'ios' ? 70 : 80),
-          right: 20,
-          backgroundColor: theme.colors.card,
-          borderRadius: 16,
-          padding: 8,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-          zIndex: 100,
-          minWidth: 160,
-        }}>
-          <TouchableOpacity
-            style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border }}
-            onPress={() => {
-              setMenuOpen(false);
-              setNotificationsModalVisible(true);
-            }}
-          >
-            <Ionicons name="notifications-outline" size={20} color={theme.colors.text} />
-            <Text style={{ marginLeft: 12, color: theme.colors.text, fontSize: 15, fontWeight: '500' }}>Notifications</Text>
-            {unreadCount > 0 && <View style={{ marginLeft: 'auto', backgroundColor: theme.colors.primary, borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2 }}><Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>{unreadCount}</Text></View>}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border }}
-            onPress={() => {
-              setMenuOpen(false);
-              toggleTheme();
-            }}
-          >
-            <Ionicons name={isDark ? "sunny-outline" : "moon-outline"} size={20} color={theme.colors.text} />
-            <Text style={{ marginLeft: 12, color: theme.colors.text, fontSize: 15, fontWeight: '500' }}>{isDark ? 'Light' : 'Dark'} Mode</Text>
-          </TouchableOpacity>
-          {userEmail === 'chohanhasnain24@gmail.com' || userEmail === 'testsubject1@mailinator.com' && (
-            <TouchableOpacity
-              style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border }}
-              onPress={() => {
-                setMenuOpen(false);
-                router.push('/logs');
-              }}
-            >
-              <Ionicons name="terminal-outline" size={20} color={theme.colors.text} />
-              <Text style={{ marginLeft: 12, color: theme.colors.text, fontSize: 15, fontWeight: '500' }}>Developer Logs</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={{ flexDirection: 'row', alignItems: 'center', padding: 12 }}
-            onPress={handleSignOut}
-          >
-            <Ionicons name="log-out-outline" size={20} color={theme.colors.error} />
-            <Text style={{ marginLeft: 12, color: theme.colors.error, fontSize: 15, fontWeight: '500' }}>Sign Out</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       {/* Filter Bar */}
       <View style={styles.filterContainer}>
