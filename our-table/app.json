@@ -39,7 +39,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow OurTable to use your location to find nearby restaurants."
         }
-      ]
+      ],
+      "./plugins/withAndroidShareIntent"
     ],
     "extra": {
       "router": {},

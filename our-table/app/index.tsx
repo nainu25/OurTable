@@ -23,6 +23,8 @@ import NotificationsModal from '../components/NotificationsModal';
 import SkeletonCard from '../components/SkeletonCard';
 import CustomAlert from '../components/CustomAlert';
 import { toast } from '../lib/toast';
+import * as Linking from 'expo-linking';
+import { useShareIntent } from '../hooks/useShareIntent';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -62,6 +64,8 @@ function HomeContent() {
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<any>(null);
+  // Share sheet content (only works in dev/production builds, not Expo Go)
+  const [sharedContent, setSharedContent] = useState<string | null>(null);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
@@ -93,6 +97,12 @@ function HomeContent() {
 
   // Filter state
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+
+  // Share sheet only works in dev/production builds, not Expo Go
+  useShareIntent((text) => {
+    setSharedContent(text);
+    setAddModalVisible(true);
+  });
 
   // ── Realtime & Refresh logic ───────────────────────────────────────────────────
 
@@ -395,9 +405,13 @@ function HomeContent() {
       {profile?.couple_id && (
         <AddPlaceModal
           visible={addModalVisible}
-          onClose={() => setAddModalVisible(false)}
+          onClose={() => {
+            setAddModalVisible(false);
+            setSharedContent(null);
+          }}
           onSaved={(newPlace) => {
             setAddModalVisible(false);
+            setSharedContent(null);
             setPlaces(prev => {
               if (prev.find(p => p.id === newPlace.id)) return prev;
               return [newPlace, ...prev];
@@ -405,6 +419,7 @@ function HomeContent() {
           }}
           coupleId={profile.couple_id}
           userId={profile.id}
+          initialUrl={sharedContent}
         />
       )}
 

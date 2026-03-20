@@ -31,6 +31,7 @@ interface Props {
   onSaved: (place: any) => void;
   coupleId: string;
   userId: string;
+  initialUrl?: string | null;
 }
 
 const TABS: { key: Tab; label: string }[] = [
@@ -40,7 +41,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'instagram', label: 'Instagram'},
 ];
 
-export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, userId }: Props) {
+export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, userId, initialUrl }: Props) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
@@ -166,6 +167,27 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
     setLoading(false);
     setIsSearching(false);
   };
+
+  // Auto-route when a URL is shared from another app
+  useEffect(() => {
+    if (!visible || !initialUrl) return;
+    const url = initialUrl.trim();
+    if (url.includes('instagram.com')) {
+      setActiveTab('instagram');
+      setIgUrl(url);
+    } else if (
+      url.includes('google.com/maps') ||
+      url.includes('maps.app.goo.gl') ||
+      url.includes('maps.google')
+    ) {
+      setActiveTab('maps_link');
+      setMapLinkUrl(url);
+    } else {
+      // Unknown URL — default to map link tab, let user fill name
+      setActiveTab('maps_link');
+      setMapLinkUrl(url);
+    }
+  }, [visible, initialUrl]);
 
   const handleClose = () => {
     resetAll();
@@ -358,6 +380,24 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
           >
+            {/* Share intent banner */}
+            {!!initialUrl && (
+              <View style={{
+                backgroundColor: theme.colors.backgroundSecondary,
+                borderRadius: theme.borderRadius.md,
+                padding: theme.spacing.md,
+                marginBottom: theme.spacing.md,
+                borderLeftWidth: 3,
+                borderLeftColor: theme.colors.brandGold,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}>
+                <Ionicons name="share-social-outline" size={16} color={theme.colors.brandGold} style={{ marginRight: 8 }} />
+                <Text style={{ ...theme.typography.small, color: theme.colors.textSecondary, flex: 1 }}>
+                  Shared from another app — URL pre-filled below. Add a name and save!
+                </Text>
+              </View>
+            )}
             {/* Manual */}
             {activeTab === 'manual' && (
               <>
