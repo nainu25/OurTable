@@ -5,7 +5,6 @@ import {
   Modal,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Linking,
   Platform,
@@ -17,6 +16,10 @@ import { logger } from '../lib/logger';
 import { useTheme } from '../context/ThemeContext';
 import { createStyles } from '../styles/components/placeDetailModal.styles';
 import StarRating from './StarRating';
+import CustomAlert from './CustomAlert';
+
+import { Ionicons } from '@expo/vector-icons';
+import { toast } from '../lib/toast';
 
 const log = logger.scope('place-detail');
 
@@ -42,6 +45,7 @@ export default function PlaceDetailModal({
 
   const [loading, setLoading] = useState(false);
   const [place, setPlace] = useState(initialPlace);
+  const [deleteAlertVisible, setDeleteAlertVisible] = useState(false);
   useEffect(() => {
     if (initialPlace) {
       setPlace(initialPlace);
@@ -71,49 +75,43 @@ export default function PlaceDetailModal({
       if (error) throw error;
       
       log.info('Visited status updated in DB', { id: place.id, status: nextStatus });
+      toast.success(nextStatus ? 'Marked as visited!' : 'Marked as not visited');
     } catch (err: any) {
       log.error('Toggle visited failed in DB', err);
       // Rollback on error
       setPlace(place);
       onUpdate(place);
-      Alert.alert('Update failed', err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const deletePlace = () => {
-    Alert.alert(
-      'Delete Place',
-      `Are you sure you want to remove "${place.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              const { error } = await supabase
-                .from('places')
-                .delete()
-                .eq('id', place.id);
+    setDeleteAlertVisible(true);
+  };
 
-              if (error) throw error;
-              
-              log.info('Place deleted', { id: place.id });
-              onUpdate();
-              onClose();
-            } catch (err: any) {
-              log.error('Delete failed', err);
-              Alert.alert('Delete failed', err.message);
-            } finally {
-              setLoading(false);
-            }
-          }
-        }
-      ]
-    );
+  const confirmDelete = async () => {
+    setDeleteAlertVisible(false);
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('places')
+        .delete()
+        .eq('id', place.id);
+
+      if (error) throw error;
+      
+      log.info('Place deleted', { id: place.id });
+      toast.success('Place removed from list');
+      onUpdate();
+      onClose();
+    } catch (err: any) {
+      log.error('Delete failed', err);
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openCoordinatesInMaps = () => {
@@ -164,12 +162,13 @@ export default function PlaceDetailModal({
 
       if (error) throw error;
       log.info('Rating updated', { id: place.id, rating });
+      toast.success('Rating saved!');
     } catch (err: any) {
       log.error('Rating update failed', err);
       // Rollback
       setPlace(place);
       onUpdate(place);
-      Alert.alert('Update failed', err.message);
+      toast.error(err.message);
     } finally {
       setRatingLoading(false);
     }
@@ -187,7 +186,7 @@ export default function PlaceDetailModal({
         <View style={styles.header}>
           <Text style={styles.headerTitle} numberOfLines={1}>{place.name}</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <Text style={styles.closeBtnText}>✕</Text>
+            <Ionicons name="close" size={24} color={theme.colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -204,7 +203,7 @@ export default function PlaceDetailModal({
           {/* Address Section */}
           {place.address && (
             <View style={styles.section}>
-              <Text style={styles.sectionIcon}>📍</Text>
+              <Ionicons name="location-outline" size={20} color={theme.colors.textSecondary} style={{ marginRight: 12, marginTop: 4 }} />
               <View style={styles.sectionContent}>
                 <Text style={styles.sectionLabel}>Address</Text>
                 <TouchableOpacity onPress={openAddressInMaps}>
@@ -219,7 +218,7 @@ export default function PlaceDetailModal({
           {/* Notes Section */}
           {place.notes && (
             <View style={styles.section}>
-              <Text style={styles.sectionIcon}>📝</Text>
+              <Ionicons name="document-text-outline" size={20} color={theme.colors.textSecondary} style={{ marginRight: 12, marginTop: 4 }} />
               <View style={styles.sectionContent}>
                 <Text style={styles.sectionLabel}>Notes</Text>
                 <Text style={styles.sectionValue}>{place.notes}</Text>
@@ -230,7 +229,7 @@ export default function PlaceDetailModal({
           {/* Maps URL Section */}
           {place.maps_url && (
             <View style={styles.section}>
-              <Text style={styles.sectionIcon}>🗺️</Text>
+              <Ionicons name="map-outline" size={20} color={theme.colors.textSecondary} style={{ marginRight: 12, marginTop: 4 }} />
               <View style={styles.sectionContent}>
                 <Text style={styles.sectionLabel}>Google Maps</Text>
                 <TouchableOpacity onPress={() => Linking.openURL(place.maps_url)}>
@@ -245,7 +244,7 @@ export default function PlaceDetailModal({
           {/* Instagram / General URL Section */}
           {place.url && (
             <View style={styles.section}>
-              <Text style={styles.sectionIcon}>🔗</Text>
+              <Ionicons name="link-outline" size={20} color={theme.colors.textSecondary} style={{ marginRight: 12, marginTop: 4 }} />
               <View style={styles.sectionContent}>
                 <Text style={styles.sectionLabel}>Link</Text>
                 <TouchableOpacity onPress={() => Linking.openURL(place.url)}>
@@ -259,7 +258,7 @@ export default function PlaceDetailModal({
 
           {/* Added By Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionIcon}>👤</Text>
+            <Ionicons name="person-outline" size={20} color={theme.colors.textSecondary} style={{ marginRight: 12, marginTop: 4 }} />
             <View style={styles.sectionContent}>
               <Text style={styles.sectionLabel}>Added By</Text>
               <Text style={styles.sectionValue}>{addedByLabel}</Text>
@@ -274,7 +273,7 @@ export default function PlaceDetailModal({
           {/* Coordinates Section */}
           {(place.latitude && place.longitude) && (
              <View style={styles.section}>
-                <Text style={styles.sectionIcon}>🌐</Text>
+                <Ionicons name="navigate-outline" size={20} color={theme.colors.textSecondary} style={{ marginRight: 12, marginTop: 4 }} />
                 <View style={styles.sectionContent}>
                   <Text style={styles.sectionLabel}>Coordinates</Text>
                   <TouchableOpacity onPress={openCoordinatesInMaps}>
@@ -299,12 +298,17 @@ export default function PlaceDetailModal({
               {loading ? (
                 <ActivityIndicator color={place.visited ? '#FFFFFF' : theme.colors.primary} size="small" />
               ) : (
-                <Text style={[
-                  styles.visitedButtonText,
-                  place.visited ? styles.visitedButtonTextActive : styles.visitedButtonTextInactive
-                ]}>
-                  {place.visited ? 'Visited ✓' : 'Mark as Visited'}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={[
+                    styles.visitedButtonText,
+                    place.visited ? styles.visitedButtonTextActive : styles.visitedButtonTextInactive
+                  ]}>
+                    {place.visited ? 'Visited' : 'Mark as Visited'}
+                  </Text>
+                  {place.visited && (
+                    <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
+                  )}
+                </View>
               )}
             </TouchableOpacity>
 
@@ -350,6 +354,18 @@ export default function PlaceDetailModal({
           )}
         </ScrollView>
       </SafeAreaView>
+
+      <CustomAlert
+        visible={deleteAlertVisible}
+        title="Remove Place"
+        message={`Are you sure you want to remove "${place.name}"? This cannot be undone.`}
+        onCancel={() => setDeleteAlertVisible(false)}
+        onConfirm={confirmDelete}
+        isDestructive={true}
+        confirmText="Remove"
+        iconName="trash-outline"
+        loading={loading}
+      />
     </Modal>
   );
 }

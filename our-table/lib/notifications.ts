@@ -58,8 +58,10 @@ export async function registerForPushNotifications(): Promise<string | null> {
   } catch (e: any) {
     if (e.message?.includes('projectId')) {
        console.warn('Push notifications: Missing projectId in app.json configuration.');
+    } else if (e.message?.includes('FirebaseApp')) {
+       console.warn('Push notifications: Firebase not configured. Please add a google-services.json to your project to enable Android push tokens.');
     } else {
-       console.error('Failed to get expo push token', e);
+       console.warn('Failed to get expo push token', e);
     }
     return null;
   }

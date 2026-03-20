@@ -4,16 +4,18 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { useTheme } from '../../context/ThemeContext';
 import { createStyles } from '../../styles/screens/login.styles';
+
+import { toast } from '../../lib/toast';
 
 export default function LoginScreen() {
   const { theme } = useTheme();
@@ -25,7 +27,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Missing fields', 'Please enter your email and password.');
+      toast.error('Please enter both email and password');
       return;
     }
 
@@ -34,7 +36,9 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Login failed', error.message);
+      toast.error(error.message);
+    } else {
+      toast.success('Welcome back!');
     }
   };
 
@@ -48,8 +52,8 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.emoji}>🍽️</Text>
-          <Text style={styles.title}>OurTable</Text>
+          <Ionicons name="restaurant-outline" size={64} color={theme.colors.brandGold} />
+          <Text style={[styles.title, { color: theme.colors.brandGold }]}>OurTable</Text>
           <Text style={styles.subtitle}>Sign in to your shared wishlist</Text>
         </View>
 
@@ -76,14 +80,14 @@ export default function LoginScreen() {
           />
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.button, { backgroundColor: theme.colors.brandGold }, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color="#1A1A1A" />
             ) : (
-              <Text style={styles.buttonText}>Sign In</Text>
+              <Text style={[styles.buttonText, { color: '#1A1A1A', fontWeight: 'bold' }]}>Sign In</Text>
             )}
           </TouchableOpacity>
         </View>

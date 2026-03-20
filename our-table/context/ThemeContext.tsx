@@ -8,6 +8,7 @@ const THEME_STORAGE_KEY = 'ourtable_theme';
 interface ThemeContextType {
   theme: Theme;
   isDark: boolean;
+  isLoaded: boolean;
   toggleTheme: () => void;
 }
 
@@ -15,6 +16,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isDark, setIsDark] = useState<boolean>(Appearance.getColorScheme() === 'dark');
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Load persisted theme preference
   useEffect(() => {
@@ -29,6 +31,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       } catch (e) {
         console.error('Failed to load theme preference', e);
+      } finally {
+        setIsLoaded(true);
       }
     };
     loadTheme();
@@ -58,7 +62,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const theme = isDark ? darkTheme : lightTheme;
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, isDark, isLoaded, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

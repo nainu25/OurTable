@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -19,6 +18,9 @@ import { useTheme } from '../context/ThemeContext';
 import { createStyles } from '../styles/components/addPlaceModal.styles';
 import { sendPushNotification } from '../lib/notifications';
 
+import { Ionicons } from '@expo/vector-icons';
+import { toast } from '../lib/toast';
+
 const log = logger.scope('add-place');
 
 type Tab = 'manual' | 'search' | 'maps_link' | 'instagram';
@@ -26,7 +28,7 @@ type Tab = 'manual' | 'search' | 'maps_link' | 'instagram';
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (place: any) => void;
   coupleId: string;
   userId: string;
 }
@@ -191,7 +193,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
 
     if (activeTab === 'manual') {
       if (!manualName.trim()) {
-        Alert.alert('Name required', 'Please enter a place name.');
+        toast.error('Place name is required');
         return;
       }
       payload = {
@@ -204,7 +206,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
 
     } else if (activeTab === 'search') {
       if (!selectedPlace) {
-        Alert.alert('Selection required', 'Please search and select a place.');
+        toast.error('Please search and select a place');
         return;
       }
       payload = {
@@ -219,11 +221,11 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
 
     } else if (activeTab === 'maps_link') {
       if (!mapLinkUrl.trim()) {
-        Alert.alert('URL required', 'Please paste a map link.');
+        toast.error('Maps link URL is required');
         return;
       }
       if (!mapLinkName.trim()) {
-        Alert.alert('Name required', 'Please enter a place name.');
+        toast.error('Place name is required');
         return;
       }
       payload = {
@@ -236,7 +238,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
 
     } else if (activeTab === 'instagram') {
       if (!igName.trim()) {
-        Alert.alert('Name required', 'Please enter a place name.');
+        toast.error('Place name is required');
         return;
       }
       payload = {
@@ -283,7 +285,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
             if (partner.expo_push_token) {
                await sendPushNotification(
                   partner.expo_push_token,
-                  "New place added! 🍽️",
+                  "New place added!",
                   `${myName} saved ${placeName}`
                );
             }
@@ -302,10 +304,11 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
       }
 
       resetAll();
-      onSaved();
+      onSaved(savedPlace);
+      toast.success('Place saved to your list!');
     } catch (err: any) {
       log.error('Save failed', err);
-      Alert.alert('Save failed', err.message ?? 'Something went wrong.');
+      toast.error(err.message ?? 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -327,7 +330,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Add a Place</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Ionicons name="close" size={24} color={theme.colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -453,7 +456,7 @@ export default function AddPlaceModal({ visible, onClose, onSaved, coupleId, use
                       style={styles.clearSelection}
                       onPress={() => setSelectedPlace(null)}
                     >
-                      <Text style={styles.clearSelectionText}>✕</Text>
+                      <Ionicons name="close" size={20} color={theme.colors.text} />
                     </TouchableOpacity>
                   </View>
                 )}

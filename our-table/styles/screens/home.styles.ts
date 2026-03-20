@@ -105,21 +105,41 @@ export const createStyles = (theme: Theme) => StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 100,
+    paddingTop: 60,
     paddingHorizontal: theme.spacing.xl,
+  },
+  emptyCard: {
+    padding: theme.spacing.xl,
+    borderRadius: 20,
+    backgroundColor: theme.colors.backgroundSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
   },
   emptyTitle: {
     ...theme.typography.h3,
+    color: theme.colors.text,
+    textAlign: 'center',
+    marginTop: theme.spacing.lg,
+  },
+  emptySubtitle: {
+    ...theme.typography.body,
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.sm,
   },
 
   // Floating Action Button
-  fab: {
+  fabContainer: {
     position: 'absolute',
     bottom: 24,
     right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    zIndex: 999,
+  },
+  fab: {
     width: 56,
     height: 56,
     borderRadius: 28,

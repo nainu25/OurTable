@@ -9,6 +9,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../context/ThemeContext';
 import { createStyles } from '../styles/components/notificationsModal.styles';
@@ -28,9 +29,9 @@ interface Notification {
   place_id: string | null;
 }
 
-export default function NotificationsModal({ 
-  visible, 
-  onClose, 
+export default function NotificationsModal({
+  visible,
+  onClose,
   currentUserId,
   onNotificationUpdate
 }: Props) {
@@ -107,7 +108,7 @@ export default function NotificationsModal({
     try {
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
       onNotificationUpdate?.();
-      
+
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
@@ -124,7 +125,7 @@ export default function NotificationsModal({
       const date = new Date(dateStr);
       const now = new Date();
       const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
-      
+
       if (diff < 60) return 'just now';
       if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
       if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
@@ -150,7 +151,7 @@ export default function NotificationsModal({
               <Text style={styles.markReadText}>Mark all as read</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -169,7 +170,7 @@ export default function NotificationsModal({
             />
           }
           renderItem={({ item }) => (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.notificationItem, !item.is_read && styles.unreadItem]}
               activeOpacity={0.7}
               onPress={() => markAsRead(item.id)}
@@ -178,13 +179,20 @@ export default function NotificationsModal({
                 <Text style={styles.message}>{item.message}</Text>
                 <Text style={styles.timeAgo}>{getTimeAgo(item.created_at)}</Text>
               </View>
-              {!item.is_read && <View style={styles.unreadDot} />}
+              {!item.is_read && (
+                <Ionicons
+                  name="ellipse"
+                  size={8}
+                  color={theme.colors.primary}
+                  style={{ marginLeft: theme.spacing.sm }}
+                />
+              )}
             </TouchableOpacity>
           )}
           ListEmptyComponent={
             !loading ? (
               <View style={styles.emptyContainer}>
-                <Text style={{ fontSize: 40 }}>📭</Text>
+                <Ionicons name="notifications-off-outline" size={64} color={theme.colors.textHint} />
                 <Text style={styles.emptyText}>No notifications yet.</Text>
               </View>
             ) : null

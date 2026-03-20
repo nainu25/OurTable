@@ -19,13 +19,15 @@
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 type Scope = string;
 
-interface LogEntry {
+export interface LogEntry {
   level: LogLevel;
   scope: Scope;
   message: string;
   data?: unknown;
   timestamp: string;
 }
+
+export const inMemoryLogs: LogEntry[] = [];
 
 // ── Visual config ─────────────────────────────────────────────────────────────
 
@@ -49,6 +51,11 @@ function log(level: LogLevel, scope: Scope, message: string, data?: unknown): vo
   const line = `${prefix}  ${message}`;
 
   const entry: LogEntry = { level, scope, message, data, timestamp: time };
+
+  inMemoryLogs.unshift(entry);
+  if (inMemoryLogs.length > 500) {
+    inMemoryLogs.pop();
+  }
 
   switch (level) {
     case 'debug':

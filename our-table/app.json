@@ -1,25 +1,27 @@
 {
   "expo": {
-    "name": "our-table",
+    "name": "OurTable",
     "slug": "our-table",
+    "scheme": "ourtable",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/branding/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/branding/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1A1A1A"
     },
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.ourtable.app",
+      "supportsTablet": false
     },
     "android": {
+      "package": "com.ourtable.app",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/branding/adaptive-icon.png",
+        "backgroundColor": "#1A1A1A"
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [

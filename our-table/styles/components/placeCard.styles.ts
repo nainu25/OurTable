@@ -104,6 +104,21 @@ export const createStyles = (theme: Theme) => StyleSheet.create({
     color: theme.colors.textHint,
     fontStyle: 'italic',
   },
+
+  // Swipe Action
+  deleteAction: {
+    backgroundColor: theme.colors.error,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
+    borderRadius: theme.borderRadius.lg,
+    marginLeft: theme.spacing.sm,
+  },
+  deleteIcon: {
+    fontSize: 20,
+    color: '#FFFFFF',
+  },
 });
 
 export default createStyles;

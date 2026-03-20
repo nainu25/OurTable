@@ -4,17 +4,19 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { authLog } from '../../lib/logger';
 import { useTheme } from '../../context/ThemeContext';
 import { createStyles } from '../../styles/screens/register.styles';
+
+import { toast } from '../../lib/toast';
 
 export default function RegisterScreen() {
   const { theme } = useTheme();
@@ -28,11 +30,11 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!fullName || !email || !password) {
-      Alert.alert('Missing fields', 'Please fill in all fields.');
+      toast.error('Please fill in all fields');
       return;
     }
     if (password.length < 6) {
-      Alert.alert('Weak password', 'Password must be at least 6 characters.');
+      toast.error('Password must be at least 6 characters');
       return;
     }
 
@@ -49,7 +51,7 @@ export default function RegisterScreen() {
 
     if (error) {
       authLog.error('Sign up failed', error);
-      Alert.alert('Registration failed', error.message);
+      toast.error(error.message);
       setLoading(false);
       return;
     }
@@ -58,6 +60,7 @@ export default function RegisterScreen() {
       authLog.info('Sign up succeeded, signing in', { userId: data.user.id });
       await supabase.auth.signInWithPassword({ email, password });
       authLog.info('Sign in complete, navigating to couple setup');
+      toast.success('Account created! Welcome');
       router.replace('/(auth)/couple');
     }
 
@@ -74,7 +77,7 @@ export default function RegisterScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.emoji}>👫</Text>
+          <Ionicons name="people-outline" size={64} color={theme.colors.brandGold} />
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Join OurTable with your partner</Text>
         </View>
@@ -112,14 +115,14 @@ export default function RegisterScreen() {
           />
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.button, { backgroundColor: theme.colors.brandGold }, loading && styles.buttonDisabled]}
             onPress={handleRegister}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color="#1A1A1A" />
             ) : (
-              <Text style={styles.buttonText}>Create Account</Text>
+              <Text style={[styles.buttonText, { color: '#1A1A1A', fontWeight: 'bold' }]}>Create Account</Text>
             )}
           </TouchableOpacity>
         </View>

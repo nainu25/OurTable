@@ -4,17 +4,19 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { coupleLog } from '../../lib/logger';
 import { useTheme } from '../../context/ThemeContext';
 import { createStyles } from '../../styles/screens/couple.styles';
+
+import { toast } from '../../lib/toast';
 
 /** Generates a random 6-character uppercase invite code */
 function generateInviteCode(): string {
@@ -66,8 +68,9 @@ export default function CoupleScreen() {
 
       // Show code on-screen (selectable!) instead of in an Alert
       setCreatedCode(code);
+      toast.success('Your table is ready!');
     } catch (err: any) {
-      Alert.alert('Error', err.message ?? 'Something went wrong.');
+      toast.error(err.message ?? 'Something went wrong.');
     } finally {
       setCreating(false);
     }
@@ -76,7 +79,7 @@ export default function CoupleScreen() {
   const handleJoinTable = async () => {
     const trimmedCode = inviteCode.trim().toUpperCase();
     if (!trimmedCode) {
-      Alert.alert('Missing code', 'Please enter an invite code.');
+      toast.error('Please enter an invite code');
       return;
     }
 
@@ -99,15 +102,15 @@ export default function CoupleScreen() {
       if (coupleError) {
         coupleLog.warn('Invite code lookup failed', { code: trimmedCode, error: coupleError });
         if (coupleError.code === 'PGRST116') {
-          Alert.alert('Invalid code', 'No table found with that invite code. Please check and try again.');
+          toast.error('Invalid code. Please check and try again.');
         } else {
-          Alert.alert('Error looking up code', `${coupleError.code}: ${coupleError.message}`);
+          toast.error(`${coupleError.code}: ${coupleError.message}`);
         }
         return;
       }
 
       if (!couple) {
-        Alert.alert('Invalid code', 'No table found with that invite code. Please check and try again.');
+        toast.error('Invalid code. Please check and try again.');
         return;
       }
 
@@ -122,9 +125,10 @@ export default function CoupleScreen() {
       if (profileError) throw profileError;
 
       coupleLog.info('Joined couple successfully', { coupleId: couple.id });
+      toast.success('Successfully joined your partner\'s table!');
       router.replace('/');
     } catch (err: any) {
-      Alert.alert('Error', err.message ?? 'Something went wrong.');
+      toast.error(err.message ?? 'Something went wrong.');
     } finally {
       setJoining(false);
     }
@@ -134,7 +138,7 @@ export default function CoupleScreen() {
   if (createdCode) {
     return (
       <View style={styles.successContainer}>
-        <Text style={styles.successEmoji}>🎉</Text>
+        <Ionicons name="trophy-outline" size={64} color={theme.colors.primary} />
         <Text style={styles.successTitle}>Table Created!</Text>
         <Text style={styles.successSubtitle}>
           Share this code with your partner so they can join:
@@ -152,7 +156,10 @@ export default function CoupleScreen() {
           style={styles.button}
           onPress={() => router.replace('/')}
         >
-          <Text style={styles.buttonText}>Continue →</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.buttonText}>Continue</Text>
+            <Ionicons name="arrow-forward-outline" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
+          </View>
         </TouchableOpacity>
       </View>
     );
@@ -168,7 +175,7 @@ export default function CoupleScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.emoji}>💑</Text>
+          <Ionicons name="heart-outline" size={64} color={theme.colors.primary} />
           <Text style={styles.title}>Set Up Your Table</Text>
           <Text style={styles.subtitle}>
             Create a new shared table or join your partner's existing one

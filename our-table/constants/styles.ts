@@ -1,27 +1,28 @@
 export const lightTheme = {
   colors: {
-    primary: '#FF6B6B',
-    background: '#FFFFFF',
-    backgroundSecondary: '#F7F7F7',
-    card: '#FFFFFF',
-    text: '#1A1A1A',
-    textSecondary: '#888888',
+    primary: '#4b88a2', // Air Force Blue
+    brandGold: '#C9A84C',
+    background: '#fff9fb', // Snow
+    backgroundSecondary: '#f0f1f4', // Lighter Alabaster
+    card: '#ffffff',
+    text: '#252627', // Carbon Black
+    textSecondary: '#666666',
     textHint: '#AAAAAA',
-    border: '#EEEEEE',
+    border: '#d3d4d9', // Alabaster Grey
     success: '#4CAF50',
-    error: '#FF3B30',
+    error: '#bb0a21', // Brick Red
     instagram: '#C13584',
     maps: '#34A853',
     manual: '#888888',
-    tabBarBackground: '#FFFFFF',
-    tabBarBorder: '#EEEEEE',
-    chipActive: '#FF6B6B',
-    chipInactive: '#FFFFFF',
-    chipTextActive: '#FFFFFF',
-    chipTextInactive: '#888888',
-    modalBackground: '#FFFFFF',
-    inputBackground: '#F7F7F7',
-    inputBorder: '#EEEEEE',
+    tabBarBackground: '#fff9fb', // Snow
+    tabBarBorder: '#d3d4d9', // Alabaster Grey
+    chipActive: '#4b88a2', // Air Force Blue
+    chipInactive: '#ffffff',
+    chipTextActive: '#fff9fb', // Snow
+    chipTextInactive: '#252627', // Carbon Black
+    modalBackground: '#fff9fb', // Snow
+    inputBackground: '#ffffff',
+    inputBorder: '#d3d4d9', // Alabaster Grey
     placeholder: '#AAAAAA',
   },
   typography: {
@@ -48,29 +49,30 @@ export const lightTheme = {
 export const darkTheme = {
   ...lightTheme,
   colors: {
-    primary: '#FF6B6B',
-    background: '#121212',
-    backgroundSecondary: '#1E1E1E',
-    card: '#1E1E1E',
-    text: '#F1F1F1',
-    textSecondary: '#AAAAAA',
-    textHint: '#666666',
-    border: '#2C2C2C',
+    primary: '#4b88a2', // Air Force Blue
+    brandGold: '#C9A84C',
+    background: '#252627', // Carbon Black
+    backgroundSecondary: '#1c1d1e', // Darker Carbon
+    card: '#1c1d1e',
+    text: '#fff9fb', // Snow
+    textSecondary: '#d3d4d9', // Alabaster Grey
+    textHint: '#888888',
+    border: '#3f4143', // Carbon Border
     success: '#4CAF50',
-    error: '#FF453A',
+    error: '#bb0a21', // Brick Red
     instagram: '#E1306C',
     maps: '#34A853',
     manual: '#888888',
-    tabBarBackground: '#1A1A1A',
-    tabBarBorder: '#2C2C2C',
-    chipActive: '#FF6B6B',
-    chipInactive: '#1E1E1E',
-    chipTextActive: '#FFFFFF',
-    chipTextInactive: '#AAAAAA',
-    modalBackground: '#1E1E1E',
-    inputBackground: '#2C2C2C',
-    inputBorder: '#3C3C3C',
-    placeholder: '#666666',
+    tabBarBackground: '#252627', // Carbon Black
+    tabBarBorder: '#3f4143',
+    chipActive: '#4b88a2', // Air Force Blue
+    chipInactive: '#1c1d1e',
+    chipTextActive: '#fff9fb', // Snow
+    chipTextInactive: '#d3d4d9', // Alabaster Grey
+    modalBackground: '#252627', // Carbon Black
+    inputBackground: '#1c1d1e',
+    inputBorder: '#3f4143',
+    placeholder: '#888888',
   },
   shadows: {
     card: {

@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { createStyles } from '../styles/components/starRating.styles';
 
+import { Ionicons } from '@expo/vector-icons';
+
 interface StarRatingProps {
   rating: number; // 0-5, 0 = unrated
   onRate?: (rating: number) => void; // If provided, stars are tappable
@@ -40,17 +42,11 @@ export default function StarRating({
           activeOpacity={0.7}
           style={styles.starButton}
         >
-          <Text
-            style={[
-              styles.starText,
-              { 
-                fontSize: size, 
-                color: v <= rating ? activeColor : theme.colors.textHint 
-              }
-            ]}
-          >
-            {v <= rating ? '★' : '☆'}
-          </Text>
+          <Ionicons
+            name={v <= rating ? "star" : "star-outline"}
+            size={size}
+            color={v <= rating ? activeColor : theme.colors.textHint}
+          />
         </TouchableOpacity>
       ))}
     </View>

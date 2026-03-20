@@ -12,12 +12,17 @@ import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import type { Session } from '@supabase/supabase-js';
 import * as Notifications from 'expo-notifications';
 import { registerForPushNotifications, savePushToken } from '../lib/notifications';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Toast from 'react-native-toast-message';
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.preventAutoHideAsync();
 
 function AppContent() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const router = useRouter();
   const segments = useSegments();
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, isLoaded } = useTheme();
   const styles = createStyles(theme);
 
   const isMounted = useRef(true);
@@ -40,6 +45,12 @@ function AppContent() {
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (session !== undefined && isLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [session, isLoaded]);
 
   useEffect(() => {
     if (session === undefined) return;
@@ -110,15 +121,23 @@ function AppContent() {
   return (
     <View style={styles.root}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+        <Stack.Screen name="index" options={{ animation: 'fade' }} />
+        <Stack.Screen name="(auth)/login" options={{ animation: 'fade' }} />
+        <Stack.Screen name="(auth)/register" options={{ animation: 'fade' }} />
+        <Stack.Screen name="(auth)/couple" options={{ animation: 'fade' }} />
+      </Stack>
+      <Toast />
     </View>
   );
 }
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
